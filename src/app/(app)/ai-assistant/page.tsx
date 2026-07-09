@@ -82,10 +82,22 @@ export default function AiAssistantPage() {
     if (e) e.preventDefault();
     if (!inputText.trim() && !selectedImage) return;
 
-    // Check credits
-    if (!isVip && (user?.ai_credits ?? 0) <= 0) {
-      showToast('Kredit AI habis. Undang teman atau upgrade ke Finy Pro.', 'warning');
-      router.push('/upgrade');
+    // Enforce daily limits (Free: 1x/day, VIP: 50x/day)
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const localDate = localStorage.getItem('finy_ai_usage_date');
+    let localCount = parseInt(localStorage.getItem('finy_ai_usage_count') || '0');
+    if (localDate !== todayKey) {
+      localCount = 0;
+    }
+    const maxAllowed = isVip ? 50 : 1;
+    if (localCount >= maxAllowed) {
+      showToast(
+        isVip 
+          ? 'Batas harian VIP (50x sehari) telah tercapai.' 
+          : 'Batas harian Free user (1x sehari) telah tercapai. Upgrade ke Finy Pro untuk akses tanpa batas!', 
+        'warning'
+      );
+      if (!isVip) router.push('/upgrade');
       return;
     }
 
@@ -130,10 +142,9 @@ export default function AiAssistantPage() {
 
       if (error) throw error;
 
-      // 2. Deduct AI credit locally
-      if (user && !isVip) {
-        useAuthStore.getState().updateProfile({ ai_credits: user.ai_credits - 1 });
-      }
+      // Increment daily limit counter
+      localStorage.setItem('finy_ai_usage_date', todayKey);
+      localStorage.setItem('finy_ai_usage_count', String(localCount + 1));
 
       const botMsg: Message = {
         id: crypto.randomUUID(),
@@ -247,7 +258,7 @@ export default function AiAssistantPage() {
           <div>
             <h2 className={styles.title}>Finy AI Assistant</h2>
             <span className={styles.creditCount}>
-              {isVip ? 'VIP Unlimited' : `${user?.ai_credits ?? 0} AI Credits`}
+              {isVip ? 'VIP (50x Sehari)' : 'Free (1x Sehari)'}
             </span>
           </div>
         </div>

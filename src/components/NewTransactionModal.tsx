@@ -100,6 +100,16 @@ export default function NewTransactionModal() {
     }
   }, [note, type, categories, categoryId, showToast, isAddTxOpen]);
 
+  // Reset selected category if it doesn't match the active transaction type
+  useEffect(() => {
+    if (isAddTxOpen && categoryId && categories.length > 0) {
+      const cat = categories.find(c => c.id === categoryId);
+      if (cat && cat.type !== type) {
+        setCategoryId('');
+      }
+    }
+  }, [type, categoryId, categories, isAddTxOpen]);
+
   const handleKeyPress = (val: string) => {
     if (amountStr === '0' && val !== '000') {
       setAmountStr(val);
@@ -206,45 +216,47 @@ export default function NewTransactionModal() {
 
         {/* Detail Input Row Cards */}
         <div className={styles.formGrid}>
-          {/* Category Picker Card */}
-          <button 
-            onClick={() => setShowCatPicker(true)} 
-            className={styles.pickerRow}
-            type="button"
-          >
-            <div className={styles.pickerLeft}>
-              <div 
-                className={styles.iconCircle}
-                style={{
-                  backgroundColor: selectedCategory ? `${selectedCategory.color}15` : 'var(--color-border-subtle)',
-                  color: selectedCategory ? selectedCategory.color : 'var(--color-ink-muted)'
-                }}
-              >
-                <PenTool size={18} />
+          <div className={styles.pickerGroup}>
+            {/* Category Picker Card */}
+            <button 
+              onClick={() => setShowCatPicker(true)} 
+              className={styles.pickerRow}
+              type="button"
+            >
+              <div className={styles.pickerLeft}>
+                <div 
+                  className={styles.iconCircle}
+                  style={{
+                    backgroundColor: selectedCategory ? `${selectedCategory.color}15` : 'var(--color-border-subtle)',
+                    color: selectedCategory ? selectedCategory.color : 'var(--color-ink-muted)'
+                  }}
+                >
+                  <PenTool size={18} />
+                </div>
+                <span className={styles.pickerLabel}>
+                  {selectedCategory ? selectedCategory.name : t('category')}
+                </span>
               </div>
-              <span className={styles.pickerLabel}>
-                {selectedCategory ? selectedCategory.name : t('category')}
-              </span>
-            </div>
-            <ChevronRight size={16} className={styles.chevron} />
-          </button>
+              <ChevronRight size={16} className={styles.chevron} />
+            </button>
 
-          {/* Wallet Picker Card */}
-          <button 
-            onClick={() => setShowWalletPicker(true)} 
-            className={styles.pickerRow}
-            type="button"
-          >
-            <div className={styles.pickerLeft}>
-              <div className={styles.iconCircle}>
-                <Receipt size={18} />
+            {/* Wallet Picker Card */}
+            <button 
+              onClick={() => setShowWalletPicker(true)} 
+              className={styles.pickerRow}
+              type="button"
+            >
+              <div className={styles.pickerLeft}>
+                <div className={styles.iconCircle}>
+                  <Receipt size={18} />
+                </div>
+                <span className={styles.pickerLabel}>
+                  {selectedWallet ? selectedWallet.name : t('wallet')}
+                </span>
               </div>
-              <span className={styles.pickerLabel}>
-                {selectedWallet ? selectedWallet.name : t('wallet')}
-              </span>
-            </div>
-            <ChevronRight size={16} className={styles.chevron} />
-          </button>
+              <ChevronRight size={16} className={styles.chevron} />
+            </button>
+          </div>
 
           {/* Date Picker */}
           <DatePicker 
@@ -313,6 +325,7 @@ export default function NewTransactionModal() {
           onClose={() => setShowCatPicker(false)}
           selectedId={categoryId}
           onChange={setCategoryId}
+          type={type}
         />
 
         <WalletPicker

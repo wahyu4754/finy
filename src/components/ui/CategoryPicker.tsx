@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../../lib/i18n';
 import { useTransactionStore } from '../../store/transactions';
 import Modal from './Modal';
@@ -13,6 +13,7 @@ interface CategoryPickerProps {
   onClose: () => void;
   selectedId: string;
   onChange: (id: string) => void;
+  type?: 'expense' | 'income';
 }
 
 export default function CategoryPicker({
@@ -20,10 +21,17 @@ export default function CategoryPicker({
   onClose,
   selectedId,
   onChange,
+  type,
 }: CategoryPickerProps) {
   const { t } = useTranslation();
   const { categories } = useTransactionStore();
-  const [activeType, setActiveType] = useState<'expense' | 'income'>('expense');
+  const [activeType, setActiveType] = useState<'expense' | 'income'>(type || 'expense');
+
+  useEffect(() => {
+    if (type) {
+      setActiveType(type);
+    }
+  }, [type]);
 
   // Filter categories by selected type and exclude archived ones
   const filtered = categories.filter(
@@ -38,15 +46,17 @@ export default function CategoryPicker({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('category')}>
       <div className={styles.container}>
-        <SegmentedControl
-          options={[
-            { label: t('expense'), value: 'expense' },
-            { label: t('income'), value: 'income' },
-          ]}
-          selectedValue={activeType}
-          onChange={(val) => setActiveType(val as 'expense' | 'income')}
-          className={styles.segment}
-        />
+        {!type && (
+          <SegmentedControl
+            options={[
+              { label: t('expense'), value: 'expense' },
+              { label: t('income'), value: 'income' },
+            ]}
+            selectedValue={activeType}
+            onChange={(val) => setActiveType(val as 'expense' | 'income')}
+            className={styles.segment}
+          />
+        )}
         
         <div className={styles.grid}>
           {filtered.map((cat) => {

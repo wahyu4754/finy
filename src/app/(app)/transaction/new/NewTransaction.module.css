@@ -57,6 +57,12 @@
   gap: 12px;
 }
 
+.pickerGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .pickerRow {
   display: flex;
   flex-direction: row;

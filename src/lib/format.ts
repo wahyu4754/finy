@@ -80,3 +80,38 @@ export function getCurrentMonth(): string {
 export function getToday(): string {
   return format(new Date(), 'yyyy-MM-dd');
 }
+
+export function calculateStreak(transactions: any[]): number {
+  if (!transactions || transactions.length === 0) return 0;
+  
+  const dates = Array.from(new Set(transactions.map(t => t.transaction_date)))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  
+  if (dates.length === 0) return 0;
+  
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
+  
+  const latestDate = dates[0];
+  
+  if (latestDate !== todayStr && latestDate !== yesterdayStr) {
+    return 0;
+  }
+  
+  let streak = 0;
+  const currentDate = new Date(latestDate);
+  
+  while (true) {
+    const checkStr = format(currentDate, 'yyyy-MM-dd');
+    if (dates.includes(checkStr)) {
+      streak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  
+  return streak;
+}

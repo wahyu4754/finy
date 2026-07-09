@@ -8,7 +8,7 @@ import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useTransactionStore } from '../../../store/transactions';
 import { useBudget } from '../../../hooks/useBudget';
-import { formatIDR, getCurrentMonth, getToday, formatCompact } from '../../../lib/format';
+import { formatIDR, getCurrentMonth, getToday, formatCompact, calculateStreak } from '../../../lib/format';
 import { useToastStore } from '../../../store/toast';
 import Card from '../../../components/ui/Card';
 import StreakBadge from '../../../components/ui/StreakBadge';
@@ -121,7 +121,7 @@ export default function HomePage() {
           </h2>
           <p className={styles.dateDisplay}>{getToday()}</p>
         </div>
-        <StreakBadge streak={3} /> {/* Mock active streak of 3 */}
+        <StreakBadge streak={calculateStreak(transactions)} />
       </header>
 
       {/* Balance Card Wrapper with Swipe handlers */}

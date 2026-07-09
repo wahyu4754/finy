@@ -52,15 +52,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── H-1: Atomic credit consumption (pre-deduct) ────────────────
-    const { data: creditOk } = await supabaseClient.rpc('consume_ai_credit');
-    if (!creditOk) throw new Error('INSUFFICIENT_CREDITS');
+    // H-1: Daily limit checks are enforced on the client side
 
     // ── H-2: Input size validation ─────────────────────────────────
     const bodyText = await req.text();
     if (bodyText.length > MAX_BODY_SIZE) {
-      // Refund credit since we didn't call AI
-      await supabaseClient.rpc('refund_ai_credit');
       return new Response(JSON.stringify({ error: 'Request terlalu besar' }), {
         status: 413,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -71,7 +67,6 @@ Deno.serve(async (req) => {
     try {
       parsedBody = JSON.parse(bodyText);
     } catch {
-      await supabaseClient.rpc('refund_ai_credit');
       return new Response(JSON.stringify({ error: 'Format request tidak valid' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -81,13 +76,11 @@ Deno.serve(async (req) => {
     const { messages, images, context } = parsedBody;
 
     if (!GEMINI_API_KEY) {
-      await supabaseClient.rpc('refund_ai_credit');
       throw new Error('AI_NOT_CONFIGURED');
     }
 
     // Validate input shapes
     if (messages && (!Array.isArray(messages) || messages.length > MAX_MESSAGES)) {
-      await supabaseClient.rpc('refund_ai_credit');
       return new Response(JSON.stringify({ error: 'Terlalu banyak pesan' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -95,7 +88,6 @@ Deno.serve(async (req) => {
     }
 
     if (images && (!Array.isArray(images) || images.length > MAX_IMAGES)) {
-      await supabaseClient.rpc('refund_ai_credit');
       return new Response(JSON.stringify({ error: 'Terlalu banyak gambar (maks 5)' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -106,7 +98,6 @@ Deno.serve(async (req) => {
     if (images) {
       for (const img of images) {
         if (img.base64 && img.base64.length > MAX_IMAGE_SIZE) {
-          await supabaseClient.rpc('refund_ai_credit');
           return new Response(JSON.stringify({ error: 'Gambar terlalu besar (maks ~3.7 MB)' }), {
             status: 400,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -226,15 +217,13 @@ ATURAN WAJIB:
     if (!response.ok) {
       const err = await response.text();
       console.error(`Gemini API error ${response.status}:`, err);
-      // Refund credit on AI failure
-      await supabaseClient.rpc('refund_ai_credit');
+      // Skip refund on failure (credit-less system)
       // M-6: Don't expose internal API error details to client
       throw new Error('AI_SERVICE_ERROR');
     }
 
     const data = await response.json();
     if (!data.candidates?.length) {
-      await supabaseClient.rpc('refund_ai_credit');
       throw new Error('AI_EMPTY_RESPONSE');
     }
 
