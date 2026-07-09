@@ -52,9 +52,9 @@ export default function ProfilePage() {
     { label: t('walletManageTitle'), path: '/wallets', icon: Wallet },
     { label: t('budgetTitle'), path: '/budget', icon: Target },
     { label: 'Transaksi Berulang (Recurring)', path: '/recurring', icon: Clock },
-    { label: t('referralTitle'), path: '/referral', icon: Gift },
+    { label: t('referralTitle'), path: '/referral', icon: Gift, disabled: true },
     { label: t('securityTitle'), path: '/security', icon: Shield },
-    { label: t('exportTitle'), path: '/export', icon: Download },
+    { label: t('exportTitle'), path: '/export', icon: Download, disabled: true },
   ];
 
   return (
@@ -114,15 +114,37 @@ export default function ProfilePage() {
       <div className={styles.menuList}>
         {menuItems.map((item, idx) => {
           const Icon = item.icon;
+          const content = (
+            <Card 
+              variant="outline" 
+              className={`${styles.menuRow} ${item.disabled ? styles.disabledRow : ''}`}
+            >
+              <div className={styles.menuLeft}>
+                <Icon size={18} className={styles.menuIcon} />
+                <span className={styles.menuLabel}>
+                  {item.label} {item.disabled && <span className={styles.comingSoon}>Coming Soon</span>}
+                </span>
+              </div>
+              <ChevronRight size={16} className={styles.chevron} />
+            </Card>
+          );
+
+          if (item.disabled) {
+            return (
+              <button 
+                key={idx} 
+                onClick={() => showToast('Fitur ini sedang dalam pengembangan.', 'info')}
+                className={styles.menuButtonLink}
+                type="button"
+              >
+                {content}
+              </button>
+            );
+          }
+
           return (
             <Link key={idx} href={item.path}>
-              <Card variant="outline" className={styles.menuRow}>
-                <div className={styles.menuLeft}>
-                  <Icon size={18} className={styles.menuIcon} />
-                  <span className={styles.menuLabel}>{item.label}</span>
-                </div>
-                <ChevronRight size={16} className={styles.chevron} />
-              </Card>
+              {content}
             </Link>
           );
         })}

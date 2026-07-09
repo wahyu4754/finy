@@ -220,3 +220,27 @@
   background-color: var(--color-danger-subtle);
   border-color: var(--color-danger);
 }
+
+.disabledRow {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.comingSoon {
+  font-size: 10px;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+  margin-left: 6px;
+  background-color: var(--color-border-subtle);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.menuButtonLink {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: not-allowed;
+}
