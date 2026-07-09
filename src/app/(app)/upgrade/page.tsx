@@ -15,18 +15,29 @@ export default function UpgradePage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { showToast } = useToastStore();
-  const { simulateVipActivation, loading } = usePurchasesStore();
+  const { createSubscription, simulateVipActivation, loading } = usePurchasesStore();
   
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
 
   const handleSubscribe = async () => {
-    showToast('Memproses transaksi (Simulasi)...', 'info');
+    showToast('Menghubungkan ke gerbang pembayaran...', 'info');
     
-    // Simulate VIP activation directly for sandbox/testing purposes
-    await simulateVipActivation();
+    const { error, redirectUrl } = await createSubscription(selectedPlan);
     
-    showToast('Pembayaran berhasil! Selamat datang di Finy Pro!', 'success');
-    router.replace('/home');
+    if (error) {
+      showToast('Gagal memproses transaksi. Coba lagi.', 'error');
+      return;
+    }
+    
+    if (redirectUrl === '#mock-payment-modal' || !redirectUrl) {
+      showToast('Memproses transaksi (Simulasi)...', 'info');
+      await simulateVipActivation();
+      showToast('Pembayaran berhasil! Selamat datang di Finy Pro!', 'success');
+      router.replace('/home');
+    } else {
+      showToast('Membuka halaman pembayaran Midtrans...', 'success');
+      window.location.href = redirectUrl;
+    }
   };
 
   const features = [

@@ -74,7 +74,7 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
       
       return { 
         error: null, 
-        snapToken: data?.token, 
+        snapToken: data?.snap_token, 
         redirectUrl: data?.redirect_url 
       };
     } catch (err) {
