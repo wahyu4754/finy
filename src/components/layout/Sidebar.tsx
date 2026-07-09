@@ -4,10 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
-  Home, BarChart3, Grid3X3, Wallet, 
-  Target, Clock, Sparkles, Download, 
-  Gift, Shield, User, LogOut, Globe
-} from 'lucide-react';
+  Home, GraphNew as BarChart3, Widget2 as Grid3X3, Wallet2 as Wallet, 
+  Target, ClockCircle as Clock, Stars as Sparkles, Download, 
+  Gift, Shield, User, Logout as LogOut, Global as Globe
+} from '@solar-icons/react';
 import { useTranslation } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth';
 import { useFeatureAccess } from '../../hooks/useFeatureAccess';

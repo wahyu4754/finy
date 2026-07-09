@@ -3,7 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Camera, Sparkles, TrendingUp, TrendingDown, ChevronRight, BarChart3, AlertCircle } from 'lucide-react';
+import { 
+  AddCircle as Plus, Camera, Stars as Sparkles, GraphUp as TrendingUp, GraphDown as TrendingDown, 
+  AltArrowRight as ChevronRight, GraphNew as BarChart3, DangerCircle as AlertCircle 
+} from '@solar-icons/react';
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useTransactionStore } from '../../../store/transactions';

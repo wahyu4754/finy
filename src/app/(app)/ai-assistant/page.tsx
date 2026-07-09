@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Trash2, Sparkles, Send, Mic, Image, Camera, Bot } from 'lucide-react';
+import { 
+  AltArrowLeft as ArrowLeft, TrashBin2 as Trash2, Stars as Sparkles, Plain as Send, 
+  Microphone as Mic, Gallery as Image, Camera, ChatSquareCode as Bot 
+} from '@solar-icons/react';
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useToastStore } from '../../../store/toast';

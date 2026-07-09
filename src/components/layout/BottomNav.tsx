@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BarChart3, Plus, Grid3X3, User } from 'lucide-react';
+import { Home, GraphNew as BarChart3, AddCircle as Plus, Widget2 as Grid3X3, User } from '@solar-icons/react';
 import { useTranslation } from '../../lib/i18n';
 import { useTransactionStore } from '../../store/transactions';
 import styles from './BottomNav.module.css';

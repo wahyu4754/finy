@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@solar-icons/react": "^1.1.1",
     "@supabase/server": "^1.3.0",
     "@supabase/supabase-js": "^2.110.1",
     "date-fns": "^4.4.0",

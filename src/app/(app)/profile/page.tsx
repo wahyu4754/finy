@@ -4,9 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  User, Wallet, Target, Clock, Gift, Shield, 
-  Download, LogOut, ChevronRight, Crown, Globe, ArrowLeft
-} from 'lucide-react';
+  User, Wallet2 as Wallet, Target, ClockCircle as Clock, Gift, Shield, 
+  Download, Logout as LogOut, AltArrowRight as ChevronRight, Crown, Global as Globe, AltArrowLeft as ArrowLeft
+} from '@solar-icons/react';
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useFeatureAccess } from '../../../hooks/useFeatureAccess';
