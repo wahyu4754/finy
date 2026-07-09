@@ -139,6 +139,23 @@
   box-shadow: var(--shadow-card);
 }
 
+.stickyKeypadContainer {
+  position: sticky;
+  bottom: -24px;
+  margin-left: -24px;
+  margin-right: -24px;
+  margin-bottom: -24px;
+  width: calc(100% + 48px);
+  background-color: var(--color-card);
+  border-top: 1.5px solid var(--color-border);
+  padding: 16px 24px 24px 24px;
+  z-index: 10;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -30,6 +30,7 @@
 .carouselContainer {
   position: relative;
   width: 100%;
+  overflow: hidden;
   cursor: grab;
   user-select: none;
   touch-action: pan-y;
@@ -37,6 +38,18 @@
 
 .carouselContainer:active {
   cursor: grabbing;
+}
+
+.carouselTrack {
+  display: flex;
+  width: 100%;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.carouselSlide {
+  flex: 0 0 100%;
+  width: 100%;
+  padding: 4px;
 }
 
 .balanceCard {

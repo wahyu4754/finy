@@ -24,7 +24,7 @@ const GoogleIcon = () => (
 export default function SignInPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signIn } = useAuthStore();
+  const { signIn, signInWithGoogle } = useAuthStore();
   const { showToast } = useToastStore();
 
   const [email, setEmail] = useState('');
@@ -50,8 +50,13 @@ export default function SignInPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    showToast('Masuk dengan Google (Placeholder)', 'info');
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      showToast(error.message || 'Gagal masuk dengan Google.', 'error');
+      setLoading(false);
+    }
   };
 
   return (

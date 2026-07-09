@@ -273,7 +273,7 @@ export default function NewTransactionModal() {
         </div>
 
         {/* Floating Keypad numpad */}
-        <div className={styles.keypadContainer} style={{ marginTop: '24px', position: 'static' }}>
+        <div className={styles.stickyKeypadContainer}>
           <div className={styles.keypad}>
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
               <button 

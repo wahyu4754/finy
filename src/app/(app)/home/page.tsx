@@ -131,39 +131,91 @@ export default function HomePage() {
         onTouchEnd={handleTouchEnd}
         className={styles.carouselContainer}
       >
-        <Card variant="default" className={styles.balanceCard}>
-          <div className={styles.balanceHeaderRow}>
-            <span className={styles.balanceLabel}>{activeWalletName}</span>
-            {selectedWallet && (
-              <span className={styles.walletTypeTag}>
-                {t(`walletType${selectedWallet.type.charAt(0).toUpperCase() + selectedWallet.type.slice(1)}` as any)}
-              </span>
-            )}
-          </div>
-          <h3 className={styles.balanceAmount}>{formatIDR(activeBalance)}</h3>
+        <div 
+          className={styles.carouselTrack}
+          style={{ transform: `translateX(-${selectedWalletIndex * 100}%)` }}
+        >
+          {/* Card 0: Semua Dompet */}
+          <div className={styles.carouselSlide}>
+            <Card variant="default" className={styles.balanceCard}>
+              <div className={styles.balanceHeaderRow}>
+                <span className={styles.balanceLabel}>Semua Dompet</span>
+              </div>
+              <h3 className={styles.balanceAmount}>
+                {formatIDR(wallets.reduce((sum, w) => sum + w.balance, 0))}
+              </h3>
 
-          <div className={styles.summaryRow}>
-            <div className={styles.summaryItem}>
-              <div className={`${styles.iconBg} ${styles.incomeBg}`}>
-                <TrendingUp size={16} />
-              </div>
-              <div>
-                <span className={styles.summaryLabel}>{t('income')}</span>
-                <p className={`${styles.summaryVal} ${styles.incomeText}`}>{formatIDR(activeIncome)}</p>
-              </div>
-            </div>
+              <div className={styles.summaryRow}>
+                <div className={styles.summaryItem}>
+                  <div className={`${styles.iconBg} ${styles.incomeBg}`}>
+                    <TrendingUp size={16} />
+                  </div>
+                  <div>
+                    <span className={styles.summaryLabel}>{t('income')}</span>
+                    <p className={`${styles.summaryVal} ${styles.incomeText}`}>
+                      {formatIDR(transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0))}
+                    </p>
+                  </div>
+                </div>
 
-            <div className={styles.summaryItem}>
-              <div className={`${styles.iconBg} ${styles.expenseBg}`}>
-                <TrendingDown size={16} />
+                <div className={styles.summaryItem}>
+                  <div className={`${styles.iconBg} ${styles.expenseBg}`}>
+                    <TrendingDown size={16} />
+                  </div>
+                  <div>
+                    <span className={styles.summaryLabel}>{t('expense')}</span>
+                    <p className={`${styles.summaryVal} ${styles.expenseText}`}>
+                      {formatIDR(transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0))}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className={styles.summaryLabel}>{t('expense')}</span>
-                <p className={`${styles.summaryVal} ${styles.expenseText}`}>{formatIDR(activeExpense)}</p>
-              </div>
-            </div>
+            </Card>
           </div>
-        </Card>
+
+          {/* Cards for each specific wallet */}
+          {wallets.map((w) => {
+            const walletTxs = transactions.filter(tx => tx.wallet_id === w.id);
+            const income = walletTxs.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
+            const expense = walletTxs.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+
+            return (
+              <div key={w.id} className={styles.carouselSlide}>
+                <Card variant="default" className={styles.balanceCard}>
+                  <div className={styles.balanceHeaderRow}>
+                    <span className={styles.balanceLabel}>{w.name}</span>
+                    <span className={styles.walletTypeTag}>
+                      {t(`walletType${w.type.charAt(0).toUpperCase() + w.type.slice(1)}` as any)}
+                    </span>
+                  </div>
+                  <h3 className={styles.balanceAmount}>{formatIDR(w.balance)}</h3>
+
+                  <div className={styles.summaryRow}>
+                    <div className={styles.summaryItem}>
+                      <div className={`${styles.iconBg} ${styles.incomeBg}`}>
+                        <TrendingUp size={16} />
+                      </div>
+                      <div>
+                        <span className={styles.summaryLabel}>{t('income')}</span>
+                        <p className={`${styles.summaryVal} ${styles.incomeText}`}>{formatIDR(income)}</p>
+                      </div>
+                    </div>
+
+                    <div className={styles.summaryItem}>
+                      <div className={`${styles.iconBg} ${styles.expenseBg}`}>
+                        <TrendingDown size={16} />
+                      </div>
+                      <div>
+                        <span className={styles.summaryLabel}>{t('expense')}</span>
+                        <p className={`${styles.summaryVal} ${styles.expenseText}`}>{formatIDR(expense)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Dot Indicators */}
