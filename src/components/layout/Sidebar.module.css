@@ -1,0 +1,162 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px 16px;
+  overflow-y: auto;
+  gap: 20px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+}
+
+.logoSquare {
+  width: 36px;
+  height: 36px;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 20px;
+  border-radius: 8px;
+}
+
+.appName {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.1;
+}
+
+.appTagline {
+  font-size: 10px;
+  color: var(--color-ink-muted);
+}
+
+.userCard {
+  background-color: var(--color-background);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.vipBadge {
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  align-self: flex-start;
+  text-transform: uppercase;
+}
+
+.upgradeLink {
+  color: var(--color-ink-muted);
+  font-size: 11px;
+  font-weight: 500;
+  align-self: flex-start;
+  text-decoration: underline;
+}
+
+.upgradeLink:hover {
+  color: var(--color-primary);
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.menuLink {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-button);
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.menuLink:hover {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+}
+
+.active {
+  background-color: var(--color-primary);
+  color: var(--color-card) !important;
+  font-weight: 600;
+}
+
+.active .icon {
+  color: var(--color-accent);
+}
+
+.highlight {
+  border: 1px dashed var(--color-accent);
+  background-color: rgba(197, 242, 60, 0.05);
+}
+
+.highlight:hover {
+  background-color: rgba(197, 242, 60, 0.1);
+  border-style: solid;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+
+.footerBtn, .logoutBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-button);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.footerBtn:hover {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+}
+
+.logoutBtn:hover {
+  background-color: var(--color-danger-subtle);
+  color: var(--color-danger);
+}

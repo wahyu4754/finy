@@ -1,0 +1,226 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backBtn {
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.pickerRow {
+  display: flex;
+  justify-content: center;
+}
+
+/* Total Card */
+.totalCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.totalHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.totalInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.totalLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.totalAmount {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-top: 4px;
+  letter-spacing: -0.02em;
+}
+
+.ratioText {
+  font-size: 12px;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.totalFooter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 12px;
+}
+
+.footerLeft {
+  color: var(--color-ink-muted);
+}
+
+.overspentText {
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.remainingText {
+  color: var(--color-success);
+}
+
+/* Sections & Lists */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-left: 4px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.itemHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.itemIcon {
+  color: var(--color-ink-soft);
+  flex-shrink: 0;
+}
+
+.catIconCircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.itemName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.itemRatio {
+  font-size: 12px;
+  color: var(--color-ink-muted);
+}
+
+.setBudgetBtn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-success);
+  background-color: var(--color-success-subtle);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* Presets Grid */
+.presetsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.presetChip {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 0;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.presetChip:hover {
+  background-color: var(--color-border-subtle);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.presetChip:active {
+  transform: scale(0.95);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.actionButtons button {
+  flex: 1;
+}

@@ -1,0 +1,253 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backBtn, .addBtn {
+  color: var(--color-ink-muted);
+  cursor: pointer;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.pickerRow {
+  display: flex;
+  justify-content: center;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+}
+
+.summaryDivider {
+  width: 1px;
+  height: 36px;
+  background-color: var(--color-border);
+}
+
+.summaryLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.summaryVal {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.income {
+  color: var(--color-success);
+}
+
+.expense {
+  color: var(--color-danger);
+}
+
+/* Filters & Search */
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchInput {
+  width: 100%;
+}
+
+.filterChips {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  background-color: var(--color-border-subtle);
+  color: var(--color-primary);
+}
+
+.activeChip {
+  background-color: var(--color-primary);
+  color: #FFFFFF !important;
+  border-color: var(--color-primary);
+}
+
+/* Lists and Groups */
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dateHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1.5px solid var(--color-border-subtle);
+}
+
+.dateLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dateTotal {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.positive {
+  color: var(--color-success);
+}
+
+.negative {
+  color: var(--color-danger);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.txRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-input);
+  transition: all 0.2s ease;
+}
+
+.txRow:hover {
+  border-color: var(--color-border);
+  transform: translateY(-1px);
+}
+
+.txIconCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.txInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.txCategory {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+
+.txWallet {
+  font-size: 11px;
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+}
+
+.txRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.txAmount {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.txNote {
+  font-size: 11px;
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txExpense { color: var(--color-danger); }
+.txIncome { color: var(--color-success); }
+
+.loading {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-ink-muted);
+  padding: 40px;
+}
+
+.emptyCard {
+  padding: 40px;
+  text-align: center;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}

@@ -1,0 +1,129 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backBtn {
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* List */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.rowLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.sparkleCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(197, 242, 60, 0.2);
+}
+
+.monthName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.previewText {
+  font-size: 11px;
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+}
+
+.chevron {
+  color: var(--color-ink-soft);
+}
+
+/* Locked Gate */
+.containerLocked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  width: 100%;
+}
+
+.lockHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 320px;
+  padding: 24px;
+}
+
+.lockCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: var(--color-border-subtle);
+  color: var(--color-ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.lockTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.lockSubtitle {
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+  margin-bottom: 24px;
+}
+
+.upgradeBtn {
+  font-size: 14px;
+  font-weight: 700;
+}

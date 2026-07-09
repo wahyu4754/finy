@@ -1,0 +1,89 @@
+.authCard {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 24px;
+  background-color: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.logoSquare {
+  width: 44px;
+  height: 44px;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(197, 242, 60, 0.3);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-top: 14px;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  margin-top: 4px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+  width: 100%;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1.5px solid var(--color-border-subtle);
+}
+
+.dividerText {
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.footerLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  transition: color 0.15s ease;
+}
+
+.footerLink:hover {
+  color: var(--color-primary);
+}

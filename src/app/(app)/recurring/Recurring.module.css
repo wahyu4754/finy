@@ -1,0 +1,104 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backBtn {
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* List rules */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  padding: 14px 16px;
+}
+
+.itemHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.clockIcon {
+  color: var(--color-ink-soft);
+  flex-shrink: 0;
+}
+
+.itemName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  display: block;
+}
+
+.itemDesc {
+  font-size: 11px;
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+  display: block;
+}
+
+.itemRight {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.itemAmount {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.expense { color: var(--color-danger); }
+.income { color: var(--color-success); }
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-border);
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.loading {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-ink-muted);
+  padding: 40px;
+}

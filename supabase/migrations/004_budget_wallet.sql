@@ -1,0 +1,2 @@
+-- Already handled in 003_wallet_budget.sql
+-- This file is intentionally empty.

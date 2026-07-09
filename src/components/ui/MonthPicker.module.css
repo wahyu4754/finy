@@ -1,0 +1,39 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 6px 12px;
+  gap: 12px;
+}
+
+.btn {
+  color: var(--color-ink-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background-color: var(--color-border-subtle);
+  color: var(--color-primary);
+}
+
+.btn:active {
+  transform: scale(0.9);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-align: center;
+  min-width: 130px;
+  user-select: none;
+}

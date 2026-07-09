@@ -1,0 +1,66 @@
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  padding-left: 4px;
+}
+
+.pickerWrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: var(--color-card);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: 0 16px;
+  height: 48px;
+  position: relative;
+  cursor: pointer;
+}
+
+.pickerWrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.05);
+}
+
+.errorBorder {
+  border-color: var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.02);
+}
+
+.icon {
+  margin-right: 12px;
+  color: var(--color-ink-muted);
+}
+
+.displayDate {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ink);
+  pointer-events: none;
+  flex: 1;
+}
+
+.nativeInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.errorText {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-danger);
+  padding-left: 4px;
+}

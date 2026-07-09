@@ -1,0 +1,172 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.backBtn, .addBtn {
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.segment {
+  margin-bottom: 8px;
+}
+
+/* Categories Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 96px;
+  cursor: pointer;
+}
+
+.customItem {
+  border-style: dashed;
+}
+
+.iconCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-align: center;
+}
+
+.customBadge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Modal Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  padding-left: 4px;
+}
+
+/* Color Picker */
+.colorsGrid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px;
+}
+
+.colorChip {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+}
+
+.colorActive {
+  border-color: var(--color-primary);
+  transform: scale(1.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Icon Picker */
+.iconsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 4px;
+}
+
+.iconChip {
+  height: 44px;
+  border-radius: 10px;
+  background-color: var(--color-border-subtle);
+  border: 1px solid transparent;
+  color: var(--color-ink-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconChip:hover {
+  background-color: var(--color-border);
+  color: var(--color-primary);
+}
+
+.iconActive {
+  background-color: var(--color-primary);
+  color: var(--color-accent) !important;
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.actionButtons button {
+  flex: 1;
+}

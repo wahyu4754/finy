@@ -1,0 +1,40 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-soft);
+  margin-bottom: 12px;
+  background-color: var(--color-border-subtle);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: 4px;
+}
+
+.description {
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  max-width: 260px;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.btn {
+  font-size: 12px;
+  font-weight: 600;
+}
