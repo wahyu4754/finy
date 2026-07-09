@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Camera, Sparkles, TrendingUp, TrendingDown, Wallet, ChevronRight, BarChart3, AlertCircle } from 'lucide-react';
+import { Plus, Camera, Sparkles, TrendingUp, TrendingDown, ChevronRight, BarChart3, AlertCircle } from 'lucide-react';
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useTransactionStore } from '../../../store/transactions';
@@ -30,7 +30,8 @@ export default function HomePage() {
     fetchTransactions, 
     fetchWallets, 
     fetchCategories,
-    loading: txLoading 
+    loading: txLoading,
+    setAddTxOpen
   } = useTransactionStore();
 
   const { 
@@ -39,24 +40,72 @@ export default function HomePage() {
     getProgressColor 
   } = useBudget(currentMonth);
 
+  // Swipeable wallet carousel state
+  const [selectedWalletIndex, setSelectedWalletIndex] = useState(0);
+
+  // Touch handlers for swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
   useEffect(() => {
     fetchWallets();
     fetchCategories();
     fetchTransactions(currentMonth);
   }, [fetchWallets, fetchCategories, fetchTransactions, currentMonth]);
 
-  // Calculations
-  const totalBalance = wallets.reduce((sum, w) => sum + w.balance, 0);
+  // Handle Swipe logic
+  const minSwipeDistance = 50;
 
-  const monthlyIncome = transactions
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    const totalCards = wallets.length + 1; // "All" + each wallet
+
+    if (isLeftSwipe) {
+      setSelectedWalletIndex((prev) => (prev < totalCards - 1 ? prev + 1 : prev));
+    } else if (isRightSwipe) {
+      setSelectedWalletIndex((prev) => (prev > 0 ? prev - 1 : prev));
+    }
+  };
+
+  // Calculations based on selected card
+  const selectedWallet = selectedWalletIndex > 0 ? wallets[selectedWalletIndex - 1] : null;
+
+  // Filter transactions dynamically based on the active wallet
+  const activeTransactions = selectedWallet
+    ? transactions.filter(t => t.wallet_id === selectedWallet.id)
+    : transactions;
+
+  // Income & Expense calculated from active transactions
+  const activeIncome = activeTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const monthlyExpense = transactions
+  const activeExpense = activeTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const recentTxs = transactions.slice(0, 5);
+  // Balance based on selection
+  const activeBalance = selectedWallet
+    ? selectedWallet.balance
+    : wallets.reduce((sum, w) => sum + w.balance, 0);
+
+  const activeWalletName = selectedWallet
+    ? selectedWallet.name
+    : 'Semua Dompet';
+
+  const recentTxs = activeTransactions.slice(0, 5);
 
   const handleScanClick = () => {
     router.push('/ai-assistant?scan=true');
@@ -75,48 +124,73 @@ export default function HomePage() {
         <StreakBadge streak={3} /> {/* Mock active streak of 3 */}
       </header>
 
-      {/* Balance Card */}
-      <Card variant="default" className={styles.balanceCard}>
-        <div className={styles.balanceInfo}>
-          <span className={styles.balanceLabel}>{t('totalBalance')}</span>
-          <h3 className={styles.balanceAmount}>{formatIDR(totalBalance)}</h3>
-        </div>
+      {/* Balance Card Wrapper with Swipe handlers */}
+      <div 
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className={styles.carouselContainer}
+      >
+        <Card variant="default" className={styles.balanceCard}>
+          <div className={styles.balanceHeaderRow}>
+            <span className={styles.balanceLabel}>{activeWalletName}</span>
+            {selectedWallet && (
+              <span className={styles.walletTypeTag}>
+                {t(`walletType${selectedWallet.type.charAt(0).toUpperCase() + selectedWallet.type.slice(1)}` as any)}
+              </span>
+            )}
+          </div>
+          <h3 className={styles.balanceAmount}>{formatIDR(activeBalance)}</h3>
 
-        <div className={styles.summaryRow}>
-          <div className={styles.summaryItem}>
-            <div className={`${styles.iconBg} ${styles.incomeBg}`}>
-              <TrendingUp size={16} />
+          <div className={styles.summaryRow}>
+            <div className={styles.summaryItem}>
+              <div className={`${styles.iconBg} ${styles.incomeBg}`}>
+                <TrendingUp size={16} />
+              </div>
+              <div>
+                <span className={styles.summaryLabel}>{t('income')}</span>
+                <p className={`${styles.summaryVal} ${styles.incomeText}`}>{formatIDR(activeIncome)}</p>
+              </div>
             </div>
-            <div>
-              <span className={styles.summaryLabel}>{t('income')}</span>
-              <p className={`${styles.summaryVal} ${styles.incomeText}`}>{formatIDR(monthlyIncome)}</p>
+
+            <div className={styles.summaryItem}>
+              <div className={`${styles.iconBg} ${styles.expenseBg}`}>
+                <TrendingDown size={16} />
+              </div>
+              <div>
+                <span className={styles.summaryLabel}>{t('expense')}</span>
+                <p className={`${styles.summaryVal} ${styles.expenseText}`}>{formatIDR(activeExpense)}</p>
+              </div>
             </div>
           </div>
+        </Card>
+      </div>
 
-          <div className={styles.summaryItem}>
-            <div className={`${styles.iconBg} ${styles.expenseBg}`}>
-              <TrendingDown size={16} />
-            </div>
-            <div>
-              <span className={styles.summaryLabel}>{t('expense')}</span>
-              <p className={`${styles.summaryVal} ${styles.expenseText}`}>{formatIDR(monthlyExpense)}</p>
-            </div>
-          </div>
-        </div>
-      </Card>
+      {/* Dot Indicators */}
+      <div className={styles.carouselDots}>
+        {Array.from({ length: wallets.length + 1 }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setSelectedWalletIndex(i)}
+            className={`${styles.dot} ${selectedWalletIndex === i ? styles.activeDot : ''}`}
+            aria-label={`Go to card ${i}`}
+            type="button"
+          />
+        ))}
+      </div>
 
       {/* Quick Action Grid */}
       <section className={styles.section}>
         <h4 className={styles.sectionTitle}>{t('quickActions')}</h4>
         <div className={styles.actionGrid}>
-          <Link href="/transaction/new" className={styles.actionBtn}>
+          <button onClick={() => setAddTxOpen(true)} className={styles.actionBtn} type="button">
             <div className={`${styles.actionIcon} ${styles.actionPlus}`}>
               <Plus size={20} />
             </div>
             <span className={styles.actionLabel}>{t('add')}</span>
-          </Link>
+          </button>
 
-          <button onClick={handleScanClick} className={styles.actionBtn}>
+          <button onClick={handleScanClick} className={styles.actionBtn} type="button">
             <div className={`${styles.actionIcon} ${styles.actionScan}`}>
               <Camera size={20} />
             </div>
@@ -167,30 +241,8 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Wallets Preview */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h4 className={styles.sectionTitle}>{t('wallet')}</h4>
-          <Link href="/wallets" className={styles.sectionLink}>
-            {t('viewAll')} <ChevronRight size={14} />
-          </Link>
-        </div>
-        <div className={styles.walletScroll}>
-          {wallets.map((w) => (
-            <Card key={w.id} className={styles.walletCard}>
-              <div className={styles.walletTop}>
-                <Wallet size={18} className={styles.walletIcon} />
-                <span className={styles.walletName}>{w.name}</span>
-              </div>
-              <h5 className={styles.walletBalance}>{formatIDR(w.balance)}</h5>
-              <span className={styles.walletType}>{t(`walletType${w.type.charAt(0).toUpperCase() + w.type.slice(1)}` as any)}</span>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* Recent Transactions List */}
-      <section className={styles.section}>
+      <section className={styles.section} style={{ marginBottom: '80px' }}>
         <div className={styles.sectionHeader}>
           <h4 className={styles.sectionTitle}>{t('recentTransactions')}</h4>
           <Link href="/transactions" className={styles.sectionLink}>

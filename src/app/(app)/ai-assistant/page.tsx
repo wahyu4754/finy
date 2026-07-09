@@ -6,6 +6,7 @@ import { ArrowLeft, Trash2, Sparkles, Send, Mic, Image, Camera, Bot } from 'luci
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useToastStore } from '../../../store/toast';
+import { useTransactionStore } from '../../../store/transactions';
 import { useFeatureAccess } from '../../../hooks/useFeatureAccess';
 import { supabase } from '../../../lib/supabase';
 import Card from '../../../components/ui/Card';
@@ -34,6 +35,7 @@ export default function AiAssistantPage() {
   const { user, fetchProfile } = useAuthStore();
   const { showToast } = useToastStore();
   const { isVip, hasAiAccess } = useFeatureAccess();
+  const { addTransaction } = useTransactionStore();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -105,11 +107,24 @@ export default function AiAssistantPage() {
 
     try {
       // 1. Call Supabase edge function 'ai-assistant'
+      const { categories, wallets } = useTransactionStore.getState();
+      const defaultWalletId = wallets.find(w => w.is_default)?.id || wallets[0]?.id || '';
+
       const { data, error } = await supabase.functions.invoke('ai-assistant', {
         body: {
-          message: userMsg.text,
-          imageBase64: userMsg.image ? userMsg.image.split(',')[1] : null,
-          history: newMessages.slice(-5).map(m => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }))
+          messages: newMessages.slice(-5).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text
+          })),
+          images: userMsg.image ? [{
+            base64: userMsg.image.split(',')[1],
+            mimeType: userMsg.image.split(';')[0].split(':')[1] || 'image/jpeg'
+          }] : [],
+          context: {
+            categories: categories.map(c => ({ id: c.id, name: c.name, type: c.type })),
+            wallets: wallets.map(w => ({ id: w.id, name: w.name, type: w.type, balance: w.balance })),
+            defaultWalletId
+          }
         }
       });
 
@@ -132,8 +147,25 @@ export default function AiAssistantPage() {
       saveHistory(updated);
 
       // Auto create transactions if AI recognized them
-      if (data?.transactions_to_add) {
+      if (data?.transactions_to_add && Array.isArray(data.transactions_to_add) && data.transactions_to_add.length > 0) {
+        for (const txToAdd of data.transactions_to_add) {
+          const cat = categories.find(c => c.name.toLowerCase() === txToAdd.category.toLowerCase() && c.type === txToAdd.type);
+          if (cat) {
+            await addTransaction({
+              amount: txToAdd.amount,
+              type: txToAdd.type,
+              category_id: cat.id,
+              wallet_id: txToAdd.wallet_id || defaultWalletId,
+              transaction_date: txToAdd.date || new Date().toISOString().slice(0, 10),
+              note: txToAdd.note || '',
+              is_recurring: false,
+              created_by_ai: true
+            });
+          }
+        }
         showToast('Transaksi baru ditambahkan oleh AI!', 'success');
+        // Refresh transactions list
+        useTransactionStore.getState().fetchTransactions(new Date().toISOString().slice(0, 7));
       }
     } catch (err) {
       console.warn('AI Chat failed, using offline fallback mockup:', err);

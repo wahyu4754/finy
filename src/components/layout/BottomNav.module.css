@@ -1,76 +1,109 @@
 .navBar {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 400px;
+  height: 64px;
+  background: rgba(244, 244, 245, 0.85);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 9999px;
   display: flex;
   flex-direction: row;
-  height: var(--nav-height);
-  background-color: var(--color-card);
-  border-top: 1px solid var(--color-border);
   align-items: center;
-  justify-content: space-around;
-  padding: 0 8px;
-  position: relative;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.03);
+  justify-content: space-between;
+  padding: 6px 10px;
+  z-index: 999;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
 .navItem {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1;
-  height: 100%;
-  color: var(--color-ink-muted);
-  gap: 4px;
-  transition: color 0.2s ease;
+  text-decoration: none;
   user-select: none;
-}
-
-.navItem:active {
-  transform: scale(0.95);
+  transition: all 0.2s ease;
+  height: 100%;
 }
 
 .active {
-  color: var(--color-primary);
+  background-color: #FFFFFF;
+  color: #0A0A0A;
+  flex-direction: row;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  animation: expandPill 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.inactive {
+  color: var(--color-ink-muted);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.inactive:hover {
+  color: var(--color-ink);
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.inactive:active {
+  transform: scale(0.95);
 }
 
 .icon {
-  transition: transform 0.2s ease;
+  stroke-width: 2px;
 }
 
 .active .icon {
-  transform: translateY(-2px);
   stroke-width: 2.5px;
 }
 
 .label {
-  font-size: 10px;
-  font-weight: 500;
-}
-
-/* FAB Floating Plus Button */
-.fabWrapper {
-  position: relative;
-  z-index: 10;
-  margin-top: -30px; /* Pull it up to overlap the tab bar */
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .fabButton {
-  width: 54px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background-color: var(--color-accent);
   color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(197, 242, 60, 0.4);
+  box-shadow: 0 4px 12px rgba(197, 242, 60, 0.3);
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .fabButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 18px rgba(197, 242, 60, 0.5);
+  box-shadow: 0 6px 16px rgba(197, 242, 60, 0.45);
 }
 
 .fabButton:active {
   transform: scale(0.95);
+}
+
+@keyframes expandPill {
+  from {
+    opacity: 0.5;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

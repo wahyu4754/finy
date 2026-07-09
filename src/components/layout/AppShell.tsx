@@ -10,6 +10,7 @@ import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import ToastContainer from '../ui/Toast';
 import PWAInstallPrompt from '../ui/PWAInstallPrompt';
+import NewTransactionModal from '../NewTransactionModal';
 import styles from './AppShell.module.css';
 
 interface AppShellProps {
@@ -79,6 +80,7 @@ export default function AppShell({ children }: AppShellProps) {
   return (
     <div className={styles.appContainer}>
       <ToastContainer />
+      <NewTransactionModal />
       <div className={styles.desktopSidebar}>
         <Sidebar />
       </div>

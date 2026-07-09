@@ -8,6 +8,10 @@ interface TransactionState {
   wallets: Wallet[];
   categories: Category[];
   loading: boolean;
+  isAddTxOpen: boolean;
+  setAddTxOpen: (open: boolean) => void;
+  editTxId: string | null;
+  setEditTxId: (id: string | null) => void;
 
   fetchTransactions: (month?: string) => Promise<void>;
   addTransaction: (tx: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => Promise<{ error: any; data: Transaction | null }>;
@@ -45,6 +49,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   wallets: [],
   categories: DEFAULT_CATEGORIES,
   loading: false,
+  isAddTxOpen: false,
+  setAddTxOpen: (open) => set({ isAddTxOpen: open }),
+  editTxId: null,
+  setEditTxId: (id) => set({ editTxId: id }),
 
   fetchTransactions: async (month) => {
     const userId = useAuthStore.getState().user?.id;
