@@ -17,6 +17,7 @@ import Card from '../../../components/ui/Card';
 import StreakBadge from '../../../components/ui/StreakBadge';
 import ProgressBar from '../../../components/ui/ProgressBar';
 import CategoryIcon from '../../../components/ui/CategoryIcon';
+import StreakShareModal from '../../../components/StreakShareModal';
 import styles from './Home.module.css';
 
 export default function HomePage() {
@@ -24,6 +25,7 @@ export default function HomePage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { showToast } = useToastStore();
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
   
   const currentMonth = getCurrentMonth();
   
@@ -124,7 +126,10 @@ export default function HomePage() {
           </h2>
           <p className={styles.dateDisplay}>{getToday()}</p>
         </div>
-        <StreakBadge streak={calculateStreak(transactions)} />
+        <StreakBadge 
+          streak={calculateStreak(transactions)} 
+          onClick={() => setIsStreakModalOpen(true)}
+        />
       </header>
 
       {/* Balance Card Wrapper with Swipe handlers */}
@@ -344,6 +349,12 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      <StreakShareModal
+        isOpen={isStreakModalOpen}
+        onClose={() => setIsStreakModalOpen(false)}
+        streak={calculateStreak(transactions)}
+      />
     </div>
   );
 }

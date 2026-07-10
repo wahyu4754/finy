@@ -6,13 +6,17 @@ import styles from './StreakBadge.module.css';
 
 interface StreakBadgeProps {
   streak: number;
+  onClick?: () => void;
 }
 
-export default function StreakBadge({ streak }: StreakBadgeProps) {
+export default function StreakBadge({ streak, onClick }: StreakBadgeProps) {
   const isActive = streak > 0;
   
   return (
-    <div className={`${styles.badge} ${isActive ? styles.active : styles.inactive}`}>
+    <div 
+      className={`${styles.badge} ${isActive ? styles.active : styles.inactive}`}
+      onClick={onClick}
+    >
       <Flame 
         size={16} 
         className={`${styles.flame} ${isActive ? styles.flameActive : ''}`} 
