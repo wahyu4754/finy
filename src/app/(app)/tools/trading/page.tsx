@@ -295,22 +295,17 @@ export default function TradingPage() {
   };
 
   const handleSellOrder = () => {
-    const sellValue = Number(amountInput);
-    if (isNaN(sellValue) || sellValue <= 0 || sellValue > positionAmount) return;
+    if (positionAmount <= 0) return;
 
     playSound('sell');
-    const cashGained = sellValue * currentPrice;
-
-    // Calculate remaining position
-    const remainingQty = positionAmount - sellValue;
-    const newAvg = remainingQty > 0 ? averagePrice : 0;
+    const cashGained = positionAmount * currentPrice;
 
     // Check if profit realized
     if (currentPrice > averagePrice) {
       playSound('win');
     }
 
-    updatePosition(remainingQty, newAvg);
+    updatePosition(0, 0);
     updateBalance(balance + cashGained);
     setAmountInput('');
   };
@@ -335,7 +330,7 @@ export default function TradingPage() {
   // Disable button validators
   const inputNum = Number(amountInput);
   const isBuyDisabled = isNaN(inputNum) || inputNum <= 0 || inputNum > balance;
-  const isSellDisabled = isNaN(inputNum) || inputNum <= 0 || inputNum > positionAmount;
+  const isSellDisabled = positionAmount <= 0;
 
   return (
     <div className={styles.container}>
@@ -383,7 +378,7 @@ export default function TradingPage() {
       <div className={styles.controlRow}>
         {/* Left: Input amount */}
         <div className={styles.inputCard}>
-          <span className={styles.controlLabel}>JUMLAH TRANSAKSI</span>
+          <span className={styles.controlLabel}>JUMLAH BELI (₣)</span>
           <div className={styles.inputFieldWrapper}>
             <span className={styles.currencySymbol}>₣</span>
             <input 
@@ -430,7 +425,7 @@ export default function TradingPage() {
           onClick={handleSellOrder}
           disabled={isSellDisabled}
         >
-          JUAL (Sell)
+          JUAL SEMUA (Sell All)
         </button>
         <button 
           className={styles.buyBtn} 
