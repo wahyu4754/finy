@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  Utensils, Car, ShoppingBag, Receipt, Package, 
+  Utensils, UtensilsCrossed, Car, ShoppingBag, Receipt, Package, 
   Briefcase, Gift, Film, Heart, TrendingUp, 
   Sparkles, Smartphone, Building2, Wallet, 
   HelpCircle, Activity, Shield, Zap, BookOpen, 
@@ -19,7 +19,7 @@ interface CategoryIconProps {
 }
 
 export const iconMap: Record<string, React.ComponentType<any>> = {
-  Utensils, Car, ShoppingBag, Receipt, Package, 
+  Utensils, UtensilsCrossed, Car, ShoppingBag, Receipt, Package, 
   Briefcase, Gift, Film, Heart, TrendingUp, 
   Sparkles, Smartphone, Building2, Wallet, 
   HelpCircle, Activity, Shield, Zap, BookOpen, 
