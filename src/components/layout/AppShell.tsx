@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '../../store/auth';
 import { useSecurityStore } from '../../store/security';
+import { usePurchasesStore } from '../../store/purchases';
 import { useI18nStore, initI18n } from '../../lib/i18n';
 import AppLock from '../AppLock';
 import Sidebar from './Sidebar';
@@ -39,6 +40,13 @@ export default function AppShell({ children }: AppShellProps) {
       );
     }
   }, [initAuth, initSec]);
+
+  // Sync VIP status on user update
+  useEffect(() => {
+    if (user) {
+      usePurchasesStore.getState().checkVipStatus();
+    }
+  }, [user]);
 
   // Handle redirect checks
   useEffect(() => {
