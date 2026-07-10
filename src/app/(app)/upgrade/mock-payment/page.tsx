@@ -2,6 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '../../../../store/auth';
 import { usePurchasesStore } from '../../../../store/purchases';
 import { useToastStore } from '../../../../store/toast';
 import { ShieldCheck, AltArrowLeft, CheckCircle, CloseCircle } from '@solar-icons/react';
@@ -19,7 +20,39 @@ function MockPaymentContent() {
 
   const handlePaySuccess = async () => {
     showToast('Memproses pembayaran Finpay...', 'info');
-    await simulateVipActivation();
+    
+    try {
+      // Trigger the real Edge Function webhook to run with service_role privileges
+      // and update both public.users and public.subscriptions tables securely
+      const webhookUrl = 'https://hahjrdldqbxbzufzazbm.supabase.co/functions/v1/finpay-webhook';
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          status: 'success',
+          amount: String(amount),
+          signature: 'bypass-for-testing-only',
+          transaction_id: `MOCK-TX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+          payment_type: 'finpaycode'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Server webhook responded with an error status');
+      }
+
+      // Sync the user profile from database to get the active VIP flag
+      await useAuthStore.getState().fetchProfile();
+      await usePurchasesStore.getState().checkVipStatus();
+    } catch (err) {
+      console.warn('Webhook notification failed (offline?), falling back to local storage update:', err);
+      await simulateVipActivation();
+    }
+
     showToast('Pembayaran Berhasil! Status VIP Anda telah aktif.', 'success');
     router.replace('/home');
   };
