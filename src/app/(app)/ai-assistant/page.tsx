@@ -144,6 +144,7 @@ export default function AiAssistantPage() {
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       // Increment daily limit counter
       localStorage.setItem('finy_ai_usage_date', todayKey);
@@ -181,13 +182,17 @@ export default function AiAssistantPage() {
         // Refresh transactions list
         useTransactionStore.getState().fetchTransactions(new Date().toISOString().slice(0, 7));
       }
-    } catch (err) {
-      console.warn('AI Chat failed, using offline fallback mockup:', err);
+    } catch (err: any) {
+      console.warn('AI Chat failed:', err);
       
-      // Simulate delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const errMsg = err?.message || '';
+      const isKnownError = errMsg.includes('AI_NOT_CONFIGURED') || 
+                           errMsg.includes('layanan AI') || 
+                           errMsg.includes('credits') || 
+                           errMsg.includes('rate_limit') ||
+                           errMsg.includes('limit') ||
+                           errMsg.includes('Unauthorized');
 
-      // Mock Bot Response
       let reply = 'Berdasarkan catatan keuangan Anda, pengeluaran terbesar bulan ini adalah **Makan** sebesar **Rp 450.000**. Anggaran makan tersisa **Rp 50.000**. Coba kurangi jajan luar agar tidak melebihi anggaran!';
       if (userMsg.text.toLowerCase().includes('menabung')) {
         reply = 'Untuk menabung **Rp 5.000.000**, Anda bisa mengalokasikan **Rp 416.000 per bulan** selama 12 bulan. Coba aktifkan fitur **Anggaran Bulanan** di Finy dan kurangi anggaran kategori **Hiburan**.';
@@ -198,7 +203,9 @@ export default function AiAssistantPage() {
       const botMsg: Message = {
         id: crypto.randomUUID(),
         sender: 'assistant',
-        text: reply,
+        text: isKnownError 
+          ? `Asisten AI Finy: Terjadi kendala konfigurasi AI (${errMsg === 'AI_NOT_CONFIGURED' ? 'GEMINI_API_KEY belum dipasang di Supabase' : errMsg}).` 
+          : `Asisten AI Finy: ${reply}`,
         timestamp: new Date().toISOString()
       };
 
