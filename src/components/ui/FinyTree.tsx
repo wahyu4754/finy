@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Sparkles, Droplets } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Droplets, X } from 'lucide-react';
 import styles from './FinyTree.module.css';
 
 interface FinyTreeProps {
@@ -11,6 +11,21 @@ interface FinyTreeProps {
 }
 
 export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTreeProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Close detailed card on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsExpanded(false);
+    };
+    if (isExpanded) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExpanded]);
+
   // Determine plant stage based on streak
   let stage = 0; // Seed
   let stageName = 'Biji Keberuntungan';
@@ -35,12 +50,13 @@ export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTr
   }
 
   // Draw corresponding SVG based on stage
-  const renderPlantSVG = () => {
+  const renderPlantSVG = (isMini = false) => {
+    const svgClass = isMini ? styles.miniSvgPlant : styles.svgPlant;
     switch (stage) {
       case 1:
         // Sprout (Streak = 1)
         return (
-          <svg viewBox="0 0 120 160" className={styles.svgPlant}>
+          <svg viewBox="0 0 120 160" className={svgClass}>
             {/* Pot */}
             <path d="M35 120 L85 120 L75 150 L45 150 Z" fill="#7C2D12" />
             <rect x="30" y="112" width="60" height="8" rx="3" fill="#9A3412" />
@@ -57,8 +73,9 @@ export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTr
       case 2:
         // Growing Sapling (Streak = 2)
         return (
-          <svg viewBox="0 0 120 160" className={styles.svgPlant}>
+          <svg viewBox="0 0 120 160" className={svgClass}>
             {/* Pot */}
+            <path d="M35 120 L85 120 Z" stroke="#451A03" strokeWidth="1" />
             <path d="M35 120 L85 120 L75 150 L45 150 Z" fill="#7C2D12" />
             <rect x="30" y="112" width="60" height="8" rx="3" fill="#9A3412" />
             <ellipse cx="60" cy="112" rx="25" ry="3" fill="#451A03" />
@@ -78,7 +95,7 @@ export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTr
       case 3:
         // Flower Bud (Streak = 3)
         return (
-          <svg viewBox="0 0 120 160" className={styles.svgPlant}>
+          <svg viewBox="0 0 120 160" className={svgClass}>
             {/* Pot */}
             <path d="M35 120 L85 120 L75 150 L45 150 Z" fill="#7C2D12" />
             <rect x="30" y="112" width="60" height="8" rx="3" fill="#9A3412" />
@@ -104,7 +121,7 @@ export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTr
       case 4:
         // Golden Tree (Streak >= 4)
         return (
-          <svg viewBox="0 0 120 160" className={styles.svgPlant}>
+          <svg viewBox="0 0 120 160" className={svgClass}>
             {/* Pot */}
             <path d="M35 120 L85 120 L75 150 L45 150 Z" fill="#7C2D12" />
             <rect x="30" y="112" width="60" height="8" rx="3" fill="#9A3412" />
@@ -138,7 +155,7 @@ export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTr
       default:
         // Seed in soil (Streak = 0)
         return (
-          <svg viewBox="0 0 120 160" className={styles.svgPlant}>
+          <svg viewBox="0 0 120 160" className={svgClass}>
             {/* Pot */}
             <path d="M35 120 L85 120 L75 150 L45 150 Z" fill="#7C2D12" />
             <rect x="30" y="112" width="60" height="8" rx="3" fill="#9A3412" />
@@ -159,54 +176,90 @@ export default function FinyTree({ streak, hasAddedToday, onWaterClick }: FinyTr
   };
 
   return (
-    <div className={styles.gardenCard}>
-      {/* Sparkles on full growth */}
-      {stage === 4 && (
-        <div className={styles.sparkleOverlay}>
-          <Sparkles className={styles.sparkleIcon1} size={14} />
-          <Sparkles className={styles.sparkleIcon2} size={16} />
-          <Sparkles className={styles.sparkleIcon3} size={12} />
-        </div>
-      )}
-
-      {/* Left Column: Interactive Plant Display */}
-      <div className={styles.plantDisplay}>
-        {renderPlantSVG()}
-        <div className={styles.stageBadge}>{stageName}</div>
+    <>
+      {/* 1. Floating Circle Widget (Tombol Melayang) */}
+      <div className={styles.floatingContainer}>
+        <button 
+          className={`${styles.floatingCircle} ${!hasAddedToday ? styles.glowingAlert : ''}`} 
+          onClick={() => setIsExpanded(true)}
+          title="Kebun Finansial Finy"
+        >
+          <div className={styles.miniSvgWrapper}>
+            {renderPlantSVG(true)}
+          </div>
+          
+          {/* Unwatered Notification Dot */}
+          {!hasAddedToday && (
+            <div className={styles.waterBadge}>
+              <Droplets size={11} className={styles.miniDroplet} />
+            </div>
+          )}
+        </button>
       </div>
 
-      {/* Right Column: Information & Watering Action */}
-      <div className={styles.plantInfo}>
-        <h4 className={styles.cardTitle}>Kebun Finansial Finy</h4>
-        <p className={styles.stageDescription}>{stageDesc}</p>
-        
-        <div className={styles.progressSection}>
-          <div className={styles.progressBarWrapper}>
-            <div className={styles.progressLabel}>
-              <span>Status Siram Harian</span>
-              <span className={hasAddedToday ? styles.textSuccess : styles.textWarning}>
-                {hasAddedToday ? 'Sudah Disiram' : 'Belum Disiram'}
-              </span>
-            </div>
-            <div className={styles.progressBarBg}>
-              <div 
-                className={`${styles.progressBarFill} ${hasAddedToday ? styles.barSuccess : ''}`}
-                style={{ width: hasAddedToday ? '100%' : '15%' }}
-              ></div>
+      {/* 2. Expanded Detail Card Overlay */}
+      {isExpanded && (
+        <div className={styles.overlay} onClick={() => setIsExpanded(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.closeBtn} onClick={() => setIsExpanded(false)}>
+              <X size={18} />
+            </button>
+
+            {/* Sparkles on full growth */}
+            {stage === 4 && (
+              <div className={styles.sparkleOverlay}>
+                <Sparkles className={styles.sparkleIcon1} size={14} />
+                <Sparkles className={styles.sparkleIcon2} size={16} />
+                <Sparkles className={styles.sparkleIcon3} size={12} />
+              </div>
+            )}
+
+            <div className={styles.modalContent}>
+              {/* Plant Display */}
+              <div className={styles.plantDisplay}>
+                {renderPlantSVG(false)}
+                <div className={styles.stageBadge}>{stageName}</div>
+              </div>
+
+              {/* Information & Action */}
+              <div className={styles.plantInfo}>
+                <h4 className={styles.cardTitle}>Kebun Finansial Finy</h4>
+                <p className={styles.stageDescription}>{stageDesc}</p>
+                
+                <div className={styles.progressSection}>
+                  <div className={styles.progressBarWrapper}>
+                    <div className={styles.progressLabel}>
+                      <span>Status Siram Harian</span>
+                      <span className={hasAddedToday ? styles.textSuccess : styles.textWarning}>
+                        {hasAddedToday ? 'Sudah Disiram' : 'Belum Disiram'}
+                      </span>
+                    </div>
+                    <div className={styles.progressBarBg}>
+                      <div 
+                        className={`${styles.progressBarFill} ${hasAddedToday ? styles.barSuccess : ''}`}
+                        style={{ width: hasAddedToday ? '100%' : '15%' }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Water Button */}
+                <button 
+                  className={`${styles.waterBtn} ${hasAddedToday ? styles.waterBtnSuccess : ''}`}
+                  onClick={() => {
+                    setIsExpanded(false);
+                    if (onWaterClick) onWaterClick();
+                  }}
+                  disabled={hasAddedToday}
+                >
+                  <Droplets size={16} />
+                  {hasAddedToday ? 'Pohon Segar! (Kembali Besok)' : 'Siram Pohon (Catat Transaksi)'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Water Button */}
-        <button 
-          className={`${styles.waterBtn} ${hasAddedToday ? styles.waterBtnSuccess : ''}`}
-          onClick={onWaterClick}
-          disabled={hasAddedToday}
-        >
-          <Droplets size={16} />
-          {hasAddedToday ? 'Pohon Segar! (Kembali Besok)' : 'Siram Pohon (Catat Transaksi)'}
-        </button>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
