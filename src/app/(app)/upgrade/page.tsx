@@ -29,13 +29,15 @@ export default function UpgradePage() {
       return;
     }
     
-    if (redirectUrl === '#mock-payment-modal' || !redirectUrl) {
-      showToast('Memproses transaksi (Simulasi)...', 'info');
-      await simulateVipActivation();
-      showToast('Pembayaran berhasil! Selamat datang di Finy Pro!', 'success');
-      router.replace('/home');
+    if (!redirectUrl) {
+      showToast('Gagal memproses transaksi.', 'error');
+      return;
+    }
+
+    showToast('Membuka halaman pembayaran Finpay...', 'success');
+    if (redirectUrl.startsWith('/')) {
+      router.push(redirectUrl);
     } else {
-      showToast('Membuka halaman pembayaran Finpay...', 'success');
       window.location.href = redirectUrl;
     }
   };

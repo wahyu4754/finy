@@ -85,10 +85,13 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Mock payment redirect
+      const mockOrderId = `FINY-MOCK-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      const mockAmount = plan === 'annual' ? 150000 : 15000;
+
       return {
         error: null,
-        snapToken: 'mock-snap-token-123',
-        redirectUrl: '#mock-payment-modal'
+        snapToken: 'mock-finpay-token-123',
+        redirectUrl: `/upgrade/mock-payment?order_id=${mockOrderId}&amount=${mockAmount}&plan=${plan}`
       };
     }
   },

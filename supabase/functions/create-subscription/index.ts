@@ -78,33 +78,35 @@ Deno.serve(async (req) => {
     // ── Create Finpay payment link ───────────────────────────────
     const finpayMerchantId = Deno.env.get('FINPAY_MERCHANT_ID');
     const finpaySecretKey = Deno.env.get('FINPAY_SECRET_KEY');
-    const finpayBaseUrl = Deno.env.get('FINPAY_BASE_URL') || 'https://sandbox.finpay.id/api/v1/';
+    const finpayBaseUrl = Deno.env.get('FINPAY_BASE_URL') || 'https://devo.finnet.co.id/pg/payment/card/initiate';
 
     if (!finpayMerchantId || !finpaySecretKey) {
       return jsonError('FINPAY_SECRET_KEY or FINPAY_MERCHANT_ID is not configured', 500);
     }
 
-    const requestUrl = `${finpayBaseUrl.replace(/\/$/, '')}/payment`;
     const authString = btoa(`${finpayMerchantId}:${finpaySecretKey}`);
 
     const finpayPayload = {
-      order: {
-        order_id: orderId,
-        amount: planConfig.amount,
-        description: planConfig.label,
-      },
       customer: {
-        name: profile?.name || user.email?.split('@')[0] || 'User',
         email: user.email || profile?.email || '',
+        firstName: profile?.name?.split(' ')[0] || user.email?.split('@')[0] || 'User',
+        lastName: profile?.name?.split(' ').slice(1).join(' ') || 'Finy',
+        mobilePhone: profile?.phone || '+628123456789'
+      },
+      order: {
+        id: orderId,
+        amount: String(planConfig.amount),
+        description: planConfig.label
       },
       url: {
-        callback_url: 'https://hahjrdldqbxbzufzazbm.supabase.co/functions/v1/finpay-webhook',
-        success_url: 'https://finy.wahyusatrio.com/home',
-        fail_url: 'https://finy.wahyusatrio.com/upgrade',
+        callbackUrl: 'https://hahjrdldqbxbzufzazbm.supabase.co/functions/v1/finpay-webhook'
+      },
+      sourceOfFunds: {
+        type: 'finpaycode'
       }
     };
 
-    const finpayRes = await fetch(requestUrl, {
+    const finpayRes = await fetch(finpayBaseUrl, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -119,7 +121,7 @@ Deno.serve(async (req) => {
     if (!finpayRes.ok) {
       console.error('Finpay error:', finpayData);
       return jsonError(
-        finpayData?.error_messages?.join(', ') || finpayData?.message || 'Failed to create payment',
+        finpayData?.responseMessage || finpayData?.error_messages?.join(', ') || finpayData?.message || 'Failed to create payment',
         finpayRes.status
       );
     }
@@ -139,8 +141,8 @@ Deno.serve(async (req) => {
     // ── Return redirect url to frontend ──────────────────────────
     return new Response(
       JSON.stringify({
-        snap_token: finpayData.token || finpayData.snap_token || 'finpay-token',
-        redirect_url: finpayData.redirect_url,
+        snap_token: finpayData.paymentCode || finpayData.token || finpayData.snap_token || 'finpay-token',
+        redirect_url: finpayData.redirecturl || finpayData.redirect_url || '',
         order_id: orderId,
       }),
       {
