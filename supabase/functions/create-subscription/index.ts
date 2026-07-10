@@ -75,60 +75,52 @@ Deno.serve(async (req) => {
     // ── M-7: Generate unique order ID (random, no user ID leak) ──
     const orderId = `FINY-${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
-    // ── Create Midtrans Snap token ───────────────────────────────
-    const midtransServerKey = Deno.env.get('MIDTRANS_SERVER_KEY');
-    if (!midtransServerKey) {
-      return jsonError('MIDTRANS_SERVER_KEY is not configured', 500);
+    // ── Create Finpay payment link ───────────────────────────────
+    const finpayMerchantId = Deno.env.get('FINPAY_MERCHANT_ID');
+    const finpaySecretKey = Deno.env.get('FINPAY_SECRET_KEY');
+    const finpayBaseUrl = Deno.env.get('FINPAY_BASE_URL') || 'https://sandbox.finpay.id/api/v1/';
+
+    if (!finpayMerchantId || !finpaySecretKey) {
+      return jsonError('FINPAY_SECRET_KEY or FINPAY_MERCHANT_ID is not configured', 500);
     }
 
-    const isProduction = Deno.env.get('MIDTRANS_PRODUCTION') === 'true';
-    const snapUrl = isProduction
-      ? 'https://app.midtrans.com/snap/v1/transactions'
-      : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+    const requestUrl = `${finpayBaseUrl.replace(/\/$/, '')}/payment`;
+    const authString = btoa(`${finpayMerchantId}:${finpaySecretKey}`);
 
-    const authString = btoa(`${midtransServerKey}:`);
-
-    const midtransPayload = {
-      transaction_details: {
+    const finpayPayload = {
+      order: {
         order_id: orderId,
-        gross_amount: planConfig.amount,
+        amount: planConfig.amount,
+        description: planConfig.label,
       },
-      item_details: [
-        {
-          id: plan,
-          name: planConfig.label,
-          price: planConfig.amount,
-          quantity: 1,
-        },
-      ],
-      customer_details: {
-        first_name: profile?.name || user.email?.split('@')[0] || 'User',
-        email: user.email || profile?.email,
+      customer: {
+        name: profile?.name || user.email?.split('@')[0] || 'User',
+        email: user.email || profile?.email || '',
       },
-      // Expire the Snap token after 24 hours
-      expiry: {
-        unit: 'hours',
-        duration: 24,
-      },
+      url: {
+        callback_url: 'https://hahjrdldqbxbzufzazbm.supabase.co/functions/v1/finpay-webhook',
+        success_url: 'https://finy.wahyusatrio.com/home',
+        fail_url: 'https://finy.wahyusatrio.com/upgrade',
+      }
     };
 
-    const midtransRes = await fetch(snapUrl, {
+    const finpayRes = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': `Basic ${authString}`,
       },
-      body: JSON.stringify(midtransPayload),
+      body: JSON.stringify(finpayPayload),
     });
 
-    const midtransData = await midtransRes.json();
+    const finpayData = await finpayRes.json();
 
-    if (!midtransRes.ok) {
-      console.error('Midtrans error:', midtransData);
+    if (!finpayRes.ok) {
+      console.error('Finpay error:', finpayData);
       return jsonError(
-        midtransData?.error_messages?.join(', ') || 'Failed to create payment',
-        midtransRes.status
+        finpayData?.error_messages?.join(', ') || finpayData?.message || 'Failed to create payment',
+        finpayRes.status
       );
     }
 
@@ -144,11 +136,11 @@ Deno.serve(async (req) => {
       expires_at: expiresAt,
     });
 
-    // ── Return snap token to frontend ────────────────────────────
+    // ── Return redirect url to frontend ──────────────────────────
     return new Response(
       JSON.stringify({
-        snap_token: midtransData.token,
-        redirect_url: midtransData.redirect_url,
+        snap_token: finpayData.token || finpayData.snap_token || 'finpay-token',
+        redirect_url: finpayData.redirect_url,
         order_id: orderId,
       }),
       {

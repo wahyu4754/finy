@@ -35,7 +35,7 @@ export default function UpgradePage() {
       showToast('Pembayaran berhasil! Selamat datang di Finy Pro!', 'success');
       router.replace('/home');
     } else {
-      showToast('Membuka halaman pembayaran Midtrans...', 'success');
+      showToast('Membuka halaman pembayaran Finpay...', 'success');
       window.location.href = redirectUrl;
     }
   };
@@ -129,10 +129,10 @@ export default function UpgradePage() {
         </div>
       </Card>
 
-      {/* Midtrans payment billing details */}
+      {/* Finpay payment billing details */}
       <div className={styles.billingCard}>
         <ShieldCheck size={16} className={styles.shieldIcon} />
-        <span>Pembayaran aman via Midtrans Gateway</span>
+        <span>Pembayaran aman via Finpay Gateway</span>
       </div>
 
       {/* CTA Button */}
