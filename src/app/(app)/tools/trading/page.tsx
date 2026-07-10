@@ -105,66 +105,91 @@ export default function TradingPage() {
     } catch (e) {}
   };
 
-  // Populate initial close price candles
-  const initPriceHistory = () => {
-    const list: Candle[] = [];
-    let price = 100;
-    for (let i = 0; i < 20; i++) {
-      const volatility = 4;
-      const change = (Math.random() - 0.48) * volatility;
-      price = Math.max(1, price + change);
-      list.push({ close: price });
+  // Seeded deterministic pseudo-random generator
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed) * 10000;
+    const r = x - Math.floor(x);
+    return r < 0 ? r + 1 : r;
+  };
+
+  // Calculate price history anchored deterministically on UTC midnight
+  const calculatePriceHistory = () => {
+    const currentTick = Math.floor(Date.now() / 2000);
+    const startOfDayTick = Math.floor(new Date().setUTCHours(0, 0, 0, 0) / 2000);
+    const anchorTick = startOfDayTick - 20;
+
+    const history: Candle[] = [];
+    const dayIndex = Math.floor(startOfDayTick / 43200);
+    
+    // Base day price (seeded deterministically per day)
+    let price = 50 + seededRandom(dayIndex) * 150; 
+
+    let prevPrice = price;
+    let lastDiff = 0;
+    let lastPct = 0;
+    let lastStatus: 'NORMAL' | 'ARA' | 'ARB' = 'NORMAL';
+
+    for (let i = anchorTick; i <= currentTick; i++) {
+      const rand = seededRandom(i);
+      let changePercent = 0;
+      let status: 'NORMAL' | 'ARA' | 'ARB' = 'NORMAL';
+
+      if (rand < 0.08) {
+        // ARA Limit Up: +20% to +35%
+        changePercent = 20 + seededRandom(i + 0.1) * 15;
+        status = 'ARA';
+      } else if (rand < 0.16) {
+        // ARB Limit Down: -15% to -30%
+        changePercent = -(15 + seededRandom(i + 0.2) * 15);
+        status = 'ARB';
+      } else if (rand < 0.35) {
+        // Volatile: -7% to +7%
+        changePercent = (seededRandom(i + 0.3) - 0.5) * 14;
+      } else {
+        // Sideways: -2% to +2%
+        changePercent = (seededRandom(i + 0.4) - 0.5) * 4;
+      }
+
+      const diff = (price * changePercent) / 100;
+      prevPrice = price;
+      price = price + diff;
+      if (price < 1) price = 1;
+
+      if (i === currentTick) {
+        lastDiff = price - prevPrice;
+        lastPct = changePercent;
+        lastStatus = status;
+      }
+
+      if (i >= currentTick - 19) {
+        history.push({ close: Math.round(price * 100) / 100 });
+      }
     }
-    setCandles(list);
-    setCurrentPrice(Math.round(price * 100) / 100);
+
+    return {
+      history,
+      currentPrice: Math.round(price * 100) / 100,
+      priceChangeVal: Math.round(lastDiff * 100) / 100,
+      priceChangePct: Math.round(lastPct * 100) / 100,
+      marketStatus: lastStatus
+    };
   };
 
   // Real-time ticking feed loop
   useEffect(() => {
-    initPriceHistory();
+    const updateChart = () => {
+      const data = calculatePriceHistory();
+      setCandles(data.history);
+      setCurrentPrice(data.currentPrice);
+      setPriceChangeVal(data.priceChangeVal);
+      setPriceChangePct(data.priceChangePct);
+      setMarketStatus(data.marketStatus);
+    };
 
-    const interval = setInterval(() => {
-      setCandles(prev => {
-        if (prev.length === 0) return prev;
+    updateChart();
 
-        const lastPrice = prev[prev.length - 1].close;
-        
-        // Determine market movement trend
-        const roll = Math.random() * 100;
-        let currentStatus: 'NORMAL' | 'ARA' | 'ARB' = 'NORMAL';
-        let changePercent = 0;
-
-        if (roll < 8) {
-          // ARA Limit Up: +20% to +35%
-          changePercent = 20 + Math.random() * 15;
-          currentStatus = 'ARA';
-        } else if (roll < 16) {
-          // ARB Limit Down: -15% to -30%
-          changePercent = -(15 + Math.random() * 15);
-          currentStatus = 'ARB';
-        } else if (roll < 35) {
-          // Volatile: -7% to +7%
-          changePercent = (Math.random() - 0.5) * 14;
-        } else {
-          // Sideways: -2% to +2%
-          changePercent = (Math.random() - 0.5) * 4;
-        }
-
-        const diff = (lastPrice * changePercent) / 100;
-        let nextPrice = lastPrice + diff;
-        if (nextPrice < 1) nextPrice = 1;
-
-        const nextCandle = { close: nextPrice };
-        
-        setCurrentPrice(Math.round(nextPrice * 100) / 100);
-        setPriceChangeVal(Math.round(diff * 100) / 100);
-        setPriceChangePct(Math.round(changePercent * 100) / 100);
-        setMarketStatus(currentStatus);
-
-        return [...prev.slice(1), nextCandle];
-      });
-    }, 2000);
-
+    // Check every 1s to capture boundary changes instantly
+    const interval = setInterval(updateChart, 1000);
     return () => clearInterval(interval);
   }, []);
 
