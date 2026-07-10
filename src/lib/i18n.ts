@@ -42,7 +42,7 @@ export const translations: TranslationDict = {
   // Navigation Tabs
   tabHome: { id: 'Beranda', en: 'Home' },
   tabStats: { id: 'Statistik', en: 'Stats' },
-  tabCategories: { id: 'Kategori', en: 'Categories' },
+  tabCategories: { id: 'Tools', en: 'Tools' },
   tabProfile: { id: 'Profil', en: 'Profile' },
 
   // Auth Screen

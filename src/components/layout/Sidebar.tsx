@@ -27,7 +27,7 @@ export default function Sidebar() {
     { label: t('tabStats'), path: '/stats', icon: BarChart3 },
     { label: t('wallet'), path: '/wallets', icon: Wallet },
     { label: t('budgetTitle'), path: '/budget', icon: Target },
-    { label: t('tabCategories'), path: '/categories', icon: Grid3X3 },
+    { label: t('tabCategories'), path: '/tools', icon: Grid3X3 },
     { label: 'Recurring', path: '/recurring', icon: Clock },
     { label: t('aiAssistant'), path: '/ai-assistant', icon: Sparkles, highlight: true },
     { label: t('exportTitle'), path: '/export', icon: Download, disabled: true },

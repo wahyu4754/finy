@@ -17,7 +17,7 @@ export default function BottomNav() {
     { label: t('tabHome'), path: '/home', icon: Home },
     { label: t('tabStats'), path: '/stats', icon: BarChart3 },
     { label: '', onClick: () => setAddTxOpen(true), icon: Plus, isFab: true },
-    { label: t('tabCategories'), path: '/categories', icon: Grid3X3 },
+    { label: t('tabCategories'), path: '/tools', icon: Grid3X3 },
     { label: t('tabProfile'), path: '/profile', icon: User },
   ];
 

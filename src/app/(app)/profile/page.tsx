@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   User, Wallet2 as Wallet, Target, ClockCircle as Clock, Gift, Shield, 
-  Download, Logout as LogOut, AltArrowRight as ChevronRight, Crown, Global as Globe, AltArrowLeft as ArrowLeft
+  Download, Logout as LogOut, AltArrowRight as ChevronRight, Crown, Global as Globe, AltArrowLeft as ArrowLeft,
+  Widget2 as Grid3X3
 } from '@solar-icons/react';
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
@@ -51,6 +52,7 @@ export default function ProfilePage() {
   const menuItems = [
     { label: t('walletManageTitle'), path: '/wallets', icon: Wallet },
     { label: t('budgetTitle'), path: '/budget', icon: Target },
+    { label: 'Kelola Kategori', path: '/categories', icon: Grid3X3 },
     { label: 'Transaksi Berulang (Recurring)', path: '/recurring', icon: Clock },
     { label: t('referralTitle'), path: '/referral', icon: Gift, disabled: true },
     { label: t('securityTitle'), path: '/security', icon: Shield },
