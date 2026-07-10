@@ -28,13 +28,12 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
     const user = useAuthStore.getState().user;
     if (!user) return;
 
-    // Check user table is_vip, vip_until, and trial_ends_at
+    // Check user table is_vip and vip_until
     const now = new Date();
     const isVipUser = user.is_vip && user.vip_until ? new Date(user.vip_until) > now : false;
-    const isTrialActive = user.trial_ends_at ? new Date(user.trial_ends_at) > now : false;
 
-    if (isVipUser || isTrialActive) {
-      set({ isVip: true, vipUntil: user.vip_until || user.trial_ends_at });
+    if (isVipUser) {
+      set({ isVip: true, vipUntil: user.vip_until });
       return;
     }
 
