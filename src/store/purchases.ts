@@ -16,7 +16,6 @@ interface PurchaseState {
   
   checkVipStatus: () => Promise<void>;
   createSubscription: (plan: 'monthly' | 'annual') => Promise<{ error: any; snapToken?: string; redirectUrl?: string }>;
-  simulateVipActivation: () => Promise<void>;
 }
 
 export const usePurchasesStore = create<PurchaseState>((set, get) => ({
@@ -76,41 +75,14 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
         snapToken: data?.snap_token, 
         redirectUrl: data?.redirect_url 
       };
-    } catch (err) {
-      console.warn('Failed calling create-subscription edge function, returning mock payment:', err);
+    } catch (err: any) {
+      console.error('Failed calling create-subscription edge function:', err);
       set({ loading: false });
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock payment redirect
-      const mockOrderId = `FINY-MOCK-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      const mockAmount = plan === 'annual' ? 150000 : 15000;
-
-      return {
-        error: null,
-        snapToken: 'mock-finpay-token-123',
-        redirectUrl: `/upgrade/mock-payment?order_id=${mockOrderId}&amount=${mockAmount}&plan=${plan}`
+      return { 
+        error: err?.message || 'Gagal memproses transaksi. Silakan coba lagi.', 
+        snapToken: undefined, 
+        redirectUrl: undefined 
       };
     }
-  },
-
-  simulateVipActivation: async () => {
-    const user = useAuthStore.getState().user;
-    if (!user) return;
-
-    set({ loading: true });
-    const futureDate = new Date();
-    futureDate.setMonth(futureDate.getMonth() + 1); // 1 month VIP
-    const futureDateStr = futureDate.toISOString();
-
-    const patch = {
-      is_vip: true,
-      vip_until: futureDateStr
-    };
-
-    // Update locally & cloud user table
-    await useAuthStore.getState().updateProfile(patch);
-    set({ isVip: true, vipUntil: futureDateStr, loading: false });
   }
 }));

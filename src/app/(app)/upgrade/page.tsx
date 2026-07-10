@@ -15,7 +15,7 @@ export default function UpgradePage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { showToast } = useToastStore();
-  const { createSubscription, simulateVipActivation, loading } = usePurchasesStore();
+  const { createSubscription, loading } = usePurchasesStore();
   
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
 
