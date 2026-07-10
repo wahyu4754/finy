@@ -12,10 +12,10 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
-  border: 2px solid rgba(197, 242, 60, 0.25);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 
-              0 0 15px rgba(197, 242, 60, 0.05);
+  background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid rgba(34, 197, 94, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 
+              0 0 15px rgba(34, 197, 94, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,9 +28,9 @@
 
 .floatingCircle:hover {
   transform: scale(1.08) translateY(-4px);
-  border-color: #C5F23C;
-  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5), 
-              0 0 25px rgba(197, 242, 60, 0.2);
+  border-color: #22c55e;
+  box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.2), 
+              0 0 25px rgba(34, 197, 94, 0.25);
 }
 
 .floatingCircle:active {
@@ -76,7 +76,7 @@
   height: 22px;
   border-radius: 50%;
   background-color: #3B82F6;
-  border: 2px solid #0f172a;
+  border: 2px solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,8 +95,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(2, 6, 17, 0.8);
-  backdrop-filter: blur(10px);
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -106,13 +106,13 @@
 }
 
 .modal {
-  background-color: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 24px;
   width: 100%;
   max-width: 400px;
   position: relative;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18);
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -123,7 +123,7 @@
   right: 16px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(15, 23, 42, 0.4);
   cursor: pointer;
   padding: 6px;
   border-radius: 50%;
@@ -135,8 +135,8 @@
 }
 
 .closeBtn:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.05);
+  color: #0f172a;
+  background-color: rgba(15, 23, 42, 0.05);
 }
 
 .modalContent {
@@ -154,29 +154,29 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: #f8fafc;
   border-radius: 20px;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.04);
 }
 
 .svgPlant {
   width: 110px;
   height: 140px;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.08));
   animation: windSway 4s ease-in-out infinite;
   transform-origin: bottom center;
 }
 
 .stageBadge {
   margin-top: 12px;
-  background-color: rgba(197, 242, 60, 0.1);
-  border: 1px solid rgba(197, 242, 60, 0.15);
+  background-color: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.15);
   border-radius: 10px;
   font-size: 11px;
   font-weight: 800;
   padding: 4px 12px;
-  color: #C5F23C;
+  color: #16803d;
   text-align: center;
 }
 
@@ -190,14 +190,14 @@
 .cardTitle {
   font-size: 18px;
   font-weight: 800;
-  color: #ffffff;
+  color: #0f172a;
   margin: 0;
   text-align: center;
 }
 
 .stageDescription {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #475569;
   line-height: 1.5;
   margin: 0;
   text-align: center;
@@ -219,7 +219,7 @@
   justify-content: space-between;
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
+  color: #64748b;
 }
 
 .textSuccess {
@@ -232,7 +232,7 @@
 
 .progressBarBg {
   height: 8px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #e2e8f0;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -251,8 +251,8 @@
 
 /* Water Button */
 .waterBtn {
-  background-color: var(--color-primary);
-  color: #020617;
+  background-color: #10B981;
+  color: #FFFFFF;
   border: none;
   font-size: 14px;
   font-weight: 800;
@@ -265,13 +265,13 @@
   gap: 8px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
-  box-shadow: 0 4px 12px rgba(197, 242, 60, 0.15);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
   margin-top: 6px;
 }
 
 .waterBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(197, 242, 60, 0.3);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
   filter: brightness(1.05);
 }
 
@@ -348,9 +348,9 @@
 }
 
 @keyframes alertGlow {
-  0% { border-color: rgba(249, 115, 22, 0.35); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 10px rgba(249, 115, 22, 0.05); }
-  50% { border-color: rgba(249, 115, 22, 0.7); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 20px rgba(249, 115, 22, 0.25); }
-  100% { border-color: rgba(249, 115, 22, 0.35); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 10px rgba(249, 115, 22, 0.05); }
+  0% { border-color: rgba(249, 115, 22, 0.35); box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 0 10px rgba(249, 115, 22, 0.05); }
+  50% { border-color: rgba(249, 115, 22, 0.7); box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 0 20px rgba(249, 115, 22, 0.25); }
+  100% { border-color: rgba(249, 115, 22, 0.35); box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 0 10px rgba(249, 115, 22, 0.05); }
 }
 
 @keyframes pulseDroplet {
