@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 // ─── Security: limits ────────────────────────────────────────────────
 const MAX_BODY_SIZE = 2 * 1024 * 1024;  // 2 MB (text only, no images)
@@ -144,7 +144,7 @@ async function callGemini(systemPrompt: string, contents: any[]): Promise<string
       contents,
       generationConfig: {
         temperature: 0.7,
-        thinkingConfig: { thinkingBudget: 0 },
+        thinkingConfig: { thinkingLevel: 'MINIMAL' },
       },
     }),
   });

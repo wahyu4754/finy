@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 // ─── Security: max body sizes ────────────────────────────────────────
 const MAX_BODY_SIZE = 10 * 1024 * 1024;  // 10 MB
@@ -209,7 +209,7 @@ ATURAN WAJIB:
         contents,
         generationConfig: {
           temperature: 0.3,
-          thinkingConfig: { thinkingBudget: 0 },
+          thinkingConfig: { thinkingLevel: 'MINIMAL' },
         },
       }),
     });
