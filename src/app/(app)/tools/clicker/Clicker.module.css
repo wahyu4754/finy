@@ -1,0 +1,130 @@
+.container {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: 12px;
+  width: 100%;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Balance Display */
+.balanceBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  padding: 16px 20px;
+  border-radius: 16px;
+  width: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.balanceLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+
+.balanceVal {
+  font-size: 22px;
+  font-weight: 900;
+  color: #F59E0B;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+}
+
+/* Clicker Area */
+.clickerArea {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 40px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.piggySvg {
+  width: 200px;
+  height: 200px;
+  filter: drop-shadow(0 12px 24px rgba(219, 39, 119, 0.15));
+  transition: transform 0.05s ease;
+}
+
+/* Float Up Text Animation */
+.floatingText {
+  position: absolute;
+  font-weight: 900;
+  font-size: 22px;
+  pointer-events: none;
+  animation: floatUpFade 0.8s forwards ease-out;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.textNormal {
+  color: #10B981;
+}
+
+.textLucky {
+  color: #3B82F6;
+  font-size: 26px;
+}
+
+.textRare {
+  color: #F59E0B;
+  font-size: 32px;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+}
+
+.instructions {
+  font-size: 13px;
+  color: var(--color-ink-soft);
+  text-align: center;
+  line-height: 1.6;
+  max-width: 340px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border-subtle);
+  padding: 16px;
+  border-radius: 16px;
+}
+
+@keyframes floatUpFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-90px) scale(1.15);
+  }
+}

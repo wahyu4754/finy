@@ -1,0 +1,303 @@
+.container {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+  padding-bottom: 96px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding-bottom: 12px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* 1. Balance Section at the top */
+.balanceSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+  gap: 4px;
+}
+
+.balanceLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+  letter-spacing: 0.5px;
+}
+
+.balanceVal {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--color-ink);
+}
+
+/* 2. Chart Card (Combined Price & Chart) */
+.chartCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.assetInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assetBadge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #F59E0B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.assetName {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.priceWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.currentPrice {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.priceChange {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.changeBullish {
+  color: #10B981;
+}
+
+.changeBearish {
+  color: #EF4444;
+}
+
+.chartWrapper {
+  width: 100%;
+  height: 180px;
+  position: relative;
+}
+
+.chartCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Ticker status at bottom of chart */
+.marketTicker {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-ink-soft);
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: 4px;
+  border-radius: 6px;
+}
+
+/* 3. Control Row (Input & Realtime P&L) */
+.controlRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.inputCard, .pnlCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.controlLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+
+.inputFieldWrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.currencySymbol {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-ink-soft);
+}
+
+.amountInput {
+  background: none;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+/* Percentage Quick Pills */
+.percentPills {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.percentPill {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 0;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.percentPill:hover {
+  background-color: rgba(197, 242, 60, 0.1);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.pnlWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.pnlVal {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--color-ink);
+}
+
+.pnlSub {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  margin-top: 2px;
+}
+
+.profitText {
+  color: #10B981 !important;
+}
+
+.lossText {
+  color: #EF4444 !important;
+}
+
+/* 4. Action Row (Sell on Left, Buy on Right) */
+.actionRow {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sellBtn {
+  background-color: #EF4444;
+  color: white;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+}
+
+.buyBtn {
+  background-color: #10B981;
+  color: white;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+
+.sellBtn:hover, .buyBtn:hover {
+  transform: translateY(-1.5px);
+  filter: brightness(1.05);
+}
+
+.sellBtn:active, .buyBtn:active {
+  transform: translateY(0);
+}
+
+.sellBtn:disabled, .buyBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

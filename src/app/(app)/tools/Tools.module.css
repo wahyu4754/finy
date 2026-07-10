@@ -1,6 +1,5 @@
 .container {
   padding: 16px;
-  padding-bottom: 96px;
   max-width: 600px;
   margin: 0 auto;
   display: flex;
@@ -23,7 +22,7 @@
   margin: 0;
 }
 
-/* Balance Bar */
+/* Balance Display */
 .balanceBar {
   display: flex;
   justify-content: space-between;
@@ -32,6 +31,7 @@
   border: 1px solid var(--color-border-subtle);
   padding: 16px 20px;
   border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .balanceLabel {
@@ -43,325 +43,67 @@
 .balanceVal {
   font-size: 22px;
   font-weight: 900;
-  color: #F59E0B; /* Golden yellow token color */
+  color: #F59E0B;
   text-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
 }
 
-/* Tabs */
-.tabs {
-  display: flex;
-  background-color: rgba(255, 255, 255, 0.03);
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border-subtle);
-}
-
-.tabBtn {
-  flex: 1;
-  background: none;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--color-ink-soft);
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.activeTab {
-  background-color: var(--color-card);
-  color: var(--color-ink);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-/* 1. Piggy Clicker Styles */
-.gameContainer {
+/* Menu Grid */
+.menuGrid {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 16px;
-  padding: 20px 0;
 }
 
-.clickerArea {
-  position: relative;
-  width: 200px;
-  height: 200px;
+.toolCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  text-align: left;
+  width: 100%;
+}
+
+.toolCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+}
+
+.iconWrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background-color: rgba(197, 242, 60, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-}
-
-.piggySvg {
-  width: 160px;
-  height: 160px;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
-  transition: transform 0.05s ease;
-}
-
-.piggySvg:active {
-  transform: scale(0.92) rotate(-2deg);
-}
-
-/* Clicker Floating Text Effect */
-.floatingText {
-  position: absolute;
-  font-weight: 900;
-  font-size: 20px;
-  pointer-events: none;
-  animation: floatUpFade 0.8s forwards ease-out;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.textNormal {
-  color: #10B981; /* Green */
-}
-
-.textLucky {
-  color: #3B82F6; /* Blue */
-  font-size: 24px;
-}
-
-.textRare {
-  color: #F59E0B; /* Gold Jackpot */
   font-size: 28px;
-  text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  flex-shrink: 0;
 }
 
-.instructions {
-  font-size: 13px;
-  color: var(--color-ink-soft);
-  text-align: center;
-  line-height: 1.5;
-  max-width: 320px;
-}
-
-/* 2. Scratch Card Styles */
-.scratchContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  width: 100%;
-}
-
-.scratchOuter {
-  position: relative;
-  width: 280px;
-  height: 180px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--color-border-subtle);
-  background-color: #f8fafc;
-}
-
-.scratchUnderlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  text-align: center;
-  z-index: 1;
-}
-
-.scratchPrize {
-  font-size: 32px;
-  font-weight: 900;
-  color: #10B981;
-  margin-bottom: 8px;
-}
-
-.scratchQuote {
-  font-size: 12px;
-  font-weight: 700;
-  color: #475569;
-  font-style: italic;
-  line-height: 1.4;
-}
-
-.scratchCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  cursor: crosshair;
-  touch-action: none;
-}
-
-.scratchBtn {
-  background-color: var(--color-primary);
-  color: #020617;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.scratchBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* 3. Trading Simulation Styles */
-.tradingGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-}
-
-.marketStatus {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 8px;
-}
-
-.statusNormal {
-  background-color: rgba(99, 102, 241, 0.08);
-  color: #6366F1;
-}
-
-.statusAra {
-  background-color: rgba(16, 185, 129, 0.08);
-  color: #10B981;
-  animation: pulseBg 1.5s infinite ease-in-out;
-}
-
-.statusArb {
-  background-color: rgba(239, 68, 68, 0.08);
-  color: #EF4444;
-  animation: pulseBg 1.5s infinite ease-in-out;
-}
-
-.chartContainer {
-  width: 100%;
-  height: 220px;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.chartCanvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.tradeDetails {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.tradeCard {
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
-  padding: 10px 14px;
+.cardContent {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.tradeLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-ink-soft);
-}
-
-.tradeVal {
-  font-size: 15px;
+.cardTitle {
+  font-size: 16px;
   font-weight: 800;
   color: var(--color-ink);
+  margin: 0;
 }
 
-.pnlProfit {
-  color: #10B981 !important;
-}
-
-.pnlLoss {
-  color: #EF4444 !important;
-}
-
-.tradeActions {
-  display: flex;
-  gap: 10px;
-}
-
-.buyBtn {
-  flex: 1;
-  background-color: #10B981;
-  color: white;
-  border: none;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
-}
-
-.sellBtn {
-  flex: 1;
-  background-color: #EF4444;
-  color: white;
-  border: none;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
-}
-
-.buyBtn:hover, .sellBtn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-}
-
-.buyBtn:disabled, .sellBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Animations */
-@keyframes floatUpFade {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(0.9);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-80px) scale(1.1);
-  }
-}
-
-@keyframes pulseBg {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; filter: brightness(1.1); }
-  100% { opacity: 0.8; }
+.cardDesc {
+  font-size: 12px;
+  color: var(--color-ink-soft);
+  line-height: 1.4;
+  margin: 0;
 }
