@@ -18,6 +18,7 @@ import StreakBadge from '../../../components/ui/StreakBadge';
 import ProgressBar from '../../../components/ui/ProgressBar';
 import CategoryIcon from '../../../components/ui/CategoryIcon';
 import StreakShareModal from '../../../components/StreakShareModal';
+import FinyTree from '../../../components/ui/FinyTree';
 import styles from './Home.module.css';
 
 export default function HomePage() {
@@ -131,6 +132,12 @@ export default function HomePage() {
           onClick={() => setIsStreakModalOpen(true)}
         />
       </header>
+
+      <FinyTree 
+        streak={calculateStreak(transactions)}
+        hasAddedToday={transactions.some(tx => tx.transaction_date === new Date().toISOString().slice(0, 10))}
+        onWaterClick={() => setAddTxOpen(true)}
+      />
 
       {/* Balance Card Wrapper with Swipe handlers */}
       <div 

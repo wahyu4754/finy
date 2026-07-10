@@ -1,0 +1,226 @@
+.gardenCard {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.plantDisplay {
+  flex: 0 0 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  padding: 12px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.svgPlant {
+  width: 90px;
+  height: 120px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+  animation: windSway 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.stageBadge {
+  margin-top: 8px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  color: var(--color-ink);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.plantInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.stageDescription {
+  font-size: 12px;
+  color: var(--color-ink-soft);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Progress Section */
+.progressSection {
+  margin: 4px 0 8px;
+}
+
+.progressBarWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+
+.textSuccess {
+  color: #10B981;
+}
+
+.textWarning {
+  color: #F59E0B;
+}
+
+.progressBarBg {
+  height: 6px;
+  background-color: var(--color-border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: #F59E0B;
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.barSuccess {
+  background-color: #10B981;
+}
+
+/* Water Button */
+.waterBtn {
+  background-color: var(--color-primary);
+  color: #020617;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.waterBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.waterBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.waterBtnSuccess {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+  border: 1px solid rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+  cursor: default;
+}
+
+/* Sparkles overlay */
+.sparkleOverlay {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  right: 20px;
+  bottom: 15px;
+  pointer-events: none;
+}
+
+.sparkleIcon1 {
+  position: absolute;
+  top: 10%;
+  left: 25%;
+  color: #FBBF24;
+  animation: pulseSparkle 2s infinite ease-in-out;
+}
+
+.sparkleIcon2 {
+  position: absolute;
+  top: 25%;
+  left: 5%;
+  color: #FBBF24;
+  animation: pulseSparkle 2.5s infinite ease-in-out;
+  animation-delay: 0.5s;
+}
+
+.sparkleIcon3 {
+  position: absolute;
+  top: 5%;
+  left: 15%;
+  color: #FFFFFF;
+  animation: pulseSparkle 3s infinite ease-in-out;
+  animation-delay: 1s;
+}
+
+/* Coin Spin Animations */
+.spinningCoin {
+  transform-origin: 48px 24px;
+  animation: rotateCoin 4s linear infinite;
+}
+
+.spinningCoinDelayed {
+  transform-origin: 24px 52px;
+  animation: rotateCoin 4s linear infinite;
+  animation-delay: 2s;
+}
+
+/* Glowing Core */
+.glowingCore {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes windSway {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(1.5deg); }
+  75% { transform: rotate(-1.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes rotateCoin {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(180deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+@keyframes glowPulse {
+  0% { transform: scale(1); opacity: 0.25; }
+  50% { transform: scale(1.15); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 0.25; }
+}
+
+@keyframes pulseSparkle {
+  0% { transform: scale(0.6); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0.3; }
+}
