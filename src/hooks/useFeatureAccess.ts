@@ -5,8 +5,7 @@ export function useFeatureAccess() {
   const { user } = useAuthStore();
   const { isVip: storeIsVip } = usePurchasesStore();
 
-  const now = new Date();
-  const isVip = storeIsVip || (user?.is_vip && (!user.vip_until || new Date(user.vip_until) > now)) || false;
+  const isVip = storeIsVip || !!user?.is_vip;
 
   const hasAccess = (feature: string): boolean => {
     if (isVip) return true;
