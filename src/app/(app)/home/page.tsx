@@ -19,6 +19,7 @@ import ProgressBar from '../../../components/ui/ProgressBar';
 import CategoryIcon from '../../../components/ui/CategoryIcon';
 import StreakShareModal from '../../../components/StreakShareModal';
 import FinyTree from '../../../components/ui/FinyTree';
+import { History } from 'lucide-react';
 import styles from './Home.module.css';
 
 export default function HomePage() {
@@ -27,6 +28,7 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const { showToast } = useToastStore();
   const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
+  const [showCumulative, setShowCumulative] = useState(false);
   
   const currentMonth = getCurrentMonth();
   
@@ -155,10 +157,29 @@ export default function HomePage() {
             <Card variant="default" className={styles.balanceCard}>
               <div className={styles.balanceHeaderRow}>
                 <span className={styles.balanceLabel}>Semua Dompet</span>
+                <button 
+                  className={styles.toggleBalanceBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCumulative(prev => !prev);
+                  }}
+                  type="button"
+                  title="Klik untuk ganti mode saldo"
+                >
+                  <History size={12} />
+                  <span>{showCumulative ? 'Total Akumulasi' : 'Saldo Bulan Ini'}</span>
+                </button>
               </div>
               <h3 className={styles.balanceAmount}>
-                {formatIDR(wallets.reduce((sum, w) => sum + w.balance, 0))}
+                {formatIDR(
+                  showCumulative 
+                    ? wallets.reduce((sum, w) => sum + w.balance, 0)
+                    : activeIncome - activeExpense
+                )}
               </h3>
+              <p className={styles.balanceSubtext}>
+                {showCumulative ? 'Total saldo akumulasi (termasuk bulan lalu)' : 'Saldo bersih bulan ini'}
+              </p>
 
               <div className={styles.summaryRow}>
                 <div className={styles.summaryItem}>
@@ -193,17 +214,37 @@ export default function HomePage() {
             const walletTxs = transactions.filter(tx => tx.wallet_id === w.id);
             const income = walletTxs.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
             const expense = walletTxs.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+            const walletMonthlyBalance = income - expense;
 
             return (
               <div key={w.id} className={styles.carouselSlide}>
                 <Card variant="default" className={styles.balanceCard}>
                   <div className={styles.balanceHeaderRow}>
-                    <span className={styles.balanceLabel}>{w.name}</span>
-                    <span className={styles.walletTypeTag}>
-                      {t(`walletType${w.type.charAt(0).toUpperCase() + w.type.slice(1)}` as any)}
-                    </span>
+                    <div className={styles.walletHeaderLeft}>
+                      <span className={styles.balanceLabel}>{w.name}</span>
+                      <span className={styles.walletTypeTag}>
+                        {t(`walletType${w.type.charAt(0).toUpperCase() + w.type.slice(1)}` as any)}
+                      </span>
+                    </div>
+                    <button 
+                      className={styles.toggleBalanceBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCumulative(prev => !prev);
+                      }}
+                      type="button"
+                      title="Klik untuk ganti mode saldo"
+                    >
+                      <History size={12} />
+                      <span>{showCumulative ? 'Total Akumulasi' : 'Saldo Bulan Ini'}</span>
+                    </button>
                   </div>
-                  <h3 className={styles.balanceAmount}>{formatIDR(w.balance)}</h3>
+                  <h3 className={styles.balanceAmount}>
+                    {formatIDR(showCumulative ? w.balance : walletMonthlyBalance)}
+                  </h3>
+                  <p className={styles.balanceSubtext}>
+                    {showCumulative ? 'Total saldo akumulasi (termasuk bulan lalu)' : 'Saldo bersih bulan ini'}
+                  </p>
 
                   <div className={styles.summaryRow}>
                     <div className={styles.summaryItem}>
