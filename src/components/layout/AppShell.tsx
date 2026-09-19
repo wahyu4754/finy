@@ -42,11 +42,13 @@ export default function AppShell({ children }: AppShellProps) {
   }, [initAuth, initSec]);
 
   // Sync VIP status on user update
+  // Depends on user?.id, not user: fetchProfile() replaces the profile object on
+  // every call, so an object dep would re-fire this effect forever.
   useEffect(() => {
     if (user) {
       usePurchasesStore.getState().checkVipStatus();
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Handle redirect checks
   useEffect(() => {

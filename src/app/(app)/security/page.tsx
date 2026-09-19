@@ -15,20 +15,18 @@ export default function SecurityPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { showToast } = useToastStore();
-  const { 
-    isEnabled, 
-    setPin, 
-    disable,
-    initialize 
+  const {
+    isEnabled,
+    setPin,
+    disable
   } = useSecurityStore();
 
   const [setupStep, setSetupStep] = useState<'idle' | 'enter' | 'confirm'>('idle');
   const [pinInput, setPinInput] = useState('');
   const [confirmInput, setConfirmInput] = useState('');
 
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
+  // No initialize() here — AppShell already hydrates the security store on cold start.
+  // Calling it on mount re-engaged the lock and unmounted this page (see store comment).
 
   const handleToggle = () => {
     if (isEnabled) {

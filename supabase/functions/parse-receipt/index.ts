@@ -3,6 +3,16 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 
+// Service-role client, used only for refund_ai_credit_for(). That RPC is revoked from
+// anon/authenticated by migration 015: the zero-argument refund_ai_credit() it replaces
+// was SECURITY DEFINER and granted to `authenticated`, so any logged-in user could call
+// it in a loop from the browser and mint unlimited AI credits.
+const adminClient = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
 // ─── Security: max sizes ─────────────────────────────────────────────
 const MAX_BODY_SIZE = 10 * 1024 * 1024;  // 10 MB total
 const MAX_IMAGE_SIZE = 5_000_000;         // ~3.7 MB raw base64
@@ -50,7 +60,7 @@ Deno.serve(async (req) => {
     // ── H-2: Input size validation ─────────────────────────────────
     const bodyText = await req.text();
     if (bodyText.length > MAX_BODY_SIZE) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Request terlalu besar' }), {
         status: 413,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -61,7 +71,7 @@ Deno.serve(async (req) => {
     try {
       parsedBody = JSON.parse(bodyText);
     } catch {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Format request tidak valid' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -71,18 +81,18 @@ Deno.serve(async (req) => {
     const { imageBase64, mimeType, userCategories } = parsedBody;
 
     if (!GEMINI_API_KEY) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       throw new Error('AI_NOT_CONFIGURED');
     }
     if (!imageBase64) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Gambar diperlukan' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
     if (imageBase64.length > MAX_IMAGE_SIZE) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Gambar terlalu besar (maks ~3.7 MB)' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -128,7 +138,7 @@ Aturan:
       });
     } catch (aiError: any) {
       // Refund credit on AI failure
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       console.error('[parse-receipt] AI failed:', aiError);
       throw new Error('AI_SERVICE_ERROR');
     }

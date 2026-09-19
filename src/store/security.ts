@@ -21,17 +21,22 @@ export const useSecurityStore = create<SecurityState>((set, get) => ({
   initialized: false,
 
   initialize: () => {
-    if (typeof window !== 'undefined') {
-      const pin = localStorage.getItem('@finy/pin');
-      const isEnabled = localStorage.getItem('@finy/pin_enabled') === 'true';
-      
-      set({ 
-        pin, 
-        isEnabled, 
-        isLocked: isEnabled, // If security lock is active, lock on launch
-        initialized: true 
-      });
-    }
+    if (typeof window === 'undefined') return;
+    // Idempotent on purpose: only a cold start may engage the lock. Because AppShell
+    // renders <AppLock/> in place of the whole tree while isLocked, and /security called
+    // initialize() on mount, unlocking remounted the page which re-locked it — an
+    // infinite loop that stranded users on the only screen holding the disable toggle.
+    if (get().initialized) return;
+
+    const pin = localStorage.getItem('@finy/pin');
+    const isEnabled = localStorage.getItem('@finy/pin_enabled') === 'true';
+
+    set({
+      pin,
+      isEnabled,
+      isLocked: isEnabled, // If security lock is active, lock on launch
+      initialized: true
+    });
   },
 
   setPin: (pin: string) => {

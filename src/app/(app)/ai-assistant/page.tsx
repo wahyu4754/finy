@@ -184,28 +184,35 @@ export default function AiAssistantPage() {
       }
     } catch (err: any) {
       console.warn('AI Chat failed:', err);
-      
-      const errMsg = err?.message || '';
-      const isKnownError = errMsg.includes('AI_NOT_CONFIGURED') || 
-                           errMsg.includes('layanan AI') || 
-                           errMsg.includes('credits') || 
-                           errMsg.includes('rate_limit') ||
-                           errMsg.includes('limit') ||
-                           errMsg.includes('Unauthorized');
 
-      let reply = 'Berdasarkan catatan keuangan Anda, pengeluaran terbesar bulan ini adalah **Makan** sebesar **Rp 450.000**. Anggaran makan tersisa **Rp 50.000**. Coba kurangi jajan luar agar tidak melebihi anggaran!';
-      if (userMsg.text.toLowerCase().includes('menabung')) {
-        reply = 'Untuk menabung **Rp 5.000.000**, Anda bisa mengalokasikan **Rp 416.000 per bulan** selama 12 bulan. Coba aktifkan fitur **Anggaran Bulanan** di Finy dan kurangi anggaran kategori **Hiburan**.';
-      } else if (userMsg.text.toLowerCase().includes('tips')) {
-        reply = 'Berikut tips hemat: \n1. Belanja dengan daftar belanjaan \n2. Bandingkan harga minimarket vs pasar \n3. Alokasikan 50-30-20 (Kebutuhan-Keinginan-Tabungan)';
+      // functions-js reports a non-2xx as FunctionsHttpError whose .message is the
+      // generic "Edge Function returned a non-2xx status code". The function's JSON body
+      // is only reachable via error.context (the raw Response). Matching on err.message
+      // therefore never succeeded, and every failure fell through to a canned reply that
+      // invented spending figures about the user's own money.
+      const body = await (err?.context?.json?.() ?? Promise.resolve(null)).catch(() => null);
+      const code = String(body?.error ?? err?.message ?? '').trim();
+      const upper = code.toUpperCase();
+
+      let detail: string;
+      if (upper.includes('AI_NOT_CONFIGURED')) {
+        detail = 'Layanan AI belum dikonfigurasi (GEMINI_API_KEY belum dipasang di Supabase).';
+      } else if (upper.includes('INSUFFICIENT_CREDITS')) {
+        detail = 'Kredit AI Anda habis. Tingkatkan ke Finy Pro atau kumpulkan kredit dari referral.';
+      } else if (upper.includes('RATE_LIMIT') || upper.includes('TERLALU BANYAK')) {
+        detail = 'Terlalu banyak permintaan. Coba lagi beberapa menit.';
+      } else if (upper.includes('UNAUTHORIZED')) {
+        detail = 'Sesi Anda telah berakhir. Silakan masuk kembali.';
+      } else if (upper.includes('AI_SERVICE_ERROR')) {
+        detail = 'Layanan AI sedang tidak dapat dihubungi. Coba lagi sebentar.';
+      } else {
+        detail = code || 'Terjadi kesalahan yang tidak diketahui.';
       }
 
       const botMsg: Message = {
         id: crypto.randomUUID(),
         sender: 'assistant',
-        text: isKnownError 
-          ? `Asisten AI Finy: Terjadi kendala konfigurasi AI (${errMsg === 'AI_NOT_CONFIGURED' ? 'GEMINI_API_KEY belum dipasang di Supabase' : errMsg}).` 
-          : `Asisten AI Finy: ${reply}`,
+        text: `Asisten AI Finy: ${detail}`,
         timestamp: new Date().toISOString()
       };
 

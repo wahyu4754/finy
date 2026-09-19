@@ -25,11 +25,9 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
   loading: false,
 
   checkVipStatus: async () => {
-    // 1. Fetch fresh user profile from DB to refresh is_vip
-    try {
-      await useAuthStore.getState().fetchProfile();
-    } catch (_) {}
-
+    // Callers that need a fresh profile (upgrade page) call fetchProfile() themselves.
+    // Calling it here replaced the user object on every invocation, which re-triggered
+    // AppShell's sync effect and produced an unbounded render/network loop.
     const user = useAuthStore.getState().user;
     if (!user) return;
 

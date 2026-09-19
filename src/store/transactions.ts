@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { addMonths, format, parseISO } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { Transaction, Wallet, Category } from '../types';
 import { useAuthStore } from './auth';
@@ -69,11 +70,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
 
     if (month) {
       const startDate = `${month}-01`;
-      // Find end date
-      const year = parseInt(month.split('-')[0]);
-      const nextMonth = parseInt(month.split('-')[1]);
-      const endDate = `${year}-${nextMonth === 12 ? '01' : String(nextMonth + 1).padStart(2, '0')}-01`;
-      
+      // Hand-rolled arithmetic here previously dropped the year rollover, so December
+      // produced .gte('YYYY-12-01').lt('YYYY-01-01') — an empty range that made the
+      // whole app look like it had lost every transaction.
+      const endDate = format(addMonths(parseISO(startDate), 1), 'yyyy-MM-dd');
+
       query = query
         .gte('transaction_date', startDate)
         .lt('transaction_date', endDate);
@@ -110,7 +111,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     };
 
     // Update wallet balance locally/optimistically
-    const wallets = get().wallets.map(w => {
+    const prevWallets = get().wallets;
+    const wallets = prevWallets.map(w => {
       if (w.id === tx.wallet_id) {
         const delta = tx.type === 'expense' ? -tx.amount : tx.amount;
         return { ...w, balance: w.balance + delta };
@@ -126,18 +128,24 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       .select('*, category:categories(*), wallet:wallets(*)')
       .single();
 
-    // Also update wallet balance in Supabase database
+    // A rejected insert must neither move money nor appear in the list. Previously the
+    // optimistic wallet delta was persisted and a fabricated row (with an id that never
+    // reached Postgres) was prepended and cached regardless of `error`, so the UI showed
+    // a transaction that did not exist while the real balance silently drifted.
+    if (error || !data) {
+      set({ wallets: prevWallets });
+      return { error: error ?? 'Gagal mencatat transaksi', data: null };
+    }
+
+    const savedTx = data as Transaction;
+
+    // Persist the wallet balance only now that the transaction row exists
     const targetWallet = wallets.find(w => w.id === tx.wallet_id);
     if (targetWallet) {
       await supabase
         .from('wallets')
         .update({ balance: targetWallet.balance })
         .eq('id', tx.wallet_id);
-    }
-
-    let savedTx = newTx;
-    if (!error && data) {
-      savedTx = data as Transaction;
     }
 
     // Update transactions list
@@ -150,7 +158,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       localStorage.setItem(`finy_wallets_${userId}`, JSON.stringify(wallets));
     }
 
-    return { error, data: savedTx };
+    return { error: null, data: savedTx };
   },
 
   updateTransaction: async (id, patch) => {

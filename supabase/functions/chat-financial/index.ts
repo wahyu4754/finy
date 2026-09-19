@@ -2,6 +2,16 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
+
+// Service-role client, used only for refund_ai_credit_for(). That RPC is revoked from
+// anon/authenticated by migration 015: the zero-argument refund_ai_credit() it replaces
+// was SECURITY DEFINER and granted to `authenticated`, so any logged-in user could call
+// it in a loop from the browser and mint unlimited AI credits.
+const adminClient = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 // ─── Security: limits ────────────────────────────────────────────────
@@ -47,7 +57,7 @@ Deno.serve(async (req) => {
     // ── H-2: Input size validation ─────────────────────────────────
     const bodyText = await req.text();
     if (bodyText.length > MAX_BODY_SIZE) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Request terlalu besar' }), {
         status: 413,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -58,7 +68,7 @@ Deno.serve(async (req) => {
     try {
       parsedBody = JSON.parse(bodyText);
     } catch {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Format request tidak valid' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -68,13 +78,13 @@ Deno.serve(async (req) => {
     const { messages, contextStats } = parsedBody;
 
     if (!GEMINI_API_KEY) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       throw new Error('AI_NOT_CONFIGURED');
     }
 
     // M-3: Validate messages array
     if (!Array.isArray(messages) || messages.length > MAX_MESSAGES) {
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Format pesan tidak valid' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -110,7 +120,7 @@ Berikut adalah kondisi keuangan user bulan ini sebagai konteks (TIDAK PERLU dise
       });
     } catch (aiError: any) {
       // Refund credit on AI failure
-      await supabaseClient.rpc('refund_ai_credit');
+      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       console.error('[chat-financial] AI error:', aiError);
       throw new Error('AI_SERVICE_ERROR');
     }

@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addMonths, subMonths, parseISO, format } from 'date-fns';
-import { formatMonthDisplay } from '../../lib/format';
+import { formatMonthDisplay, getCurrentMonth } from '../../lib/format';
 import styles from './MonthPicker.module.css';
 
 interface MonthPickerProps {
@@ -12,6 +12,10 @@ interface MonthPickerProps {
 }
 
 export default function MonthPicker({ value, onChange }: MonthPickerProps) {
+  // Future months have no data and, before the endDate fix, produced an empty
+  // query range that looked like total data loss.
+  const isCurrentMonth = value >= getCurrentMonth();
+
   const handlePrev = () => {
     const current = parseISO(`${value}-01`);
     const prev = subMonths(current, 1);
@@ -19,6 +23,7 @@ export default function MonthPicker({ value, onChange }: MonthPickerProps) {
   };
 
   const handleNext = () => {
+    if (isCurrentMonth) return;
     const current = parseISO(`${value}-01`);
     const next = addMonths(current, 1);
     onChange(format(next, 'yyyy-MM'));
@@ -37,11 +42,13 @@ export default function MonthPicker({ value, onChange }: MonthPickerProps) {
       
       <span className={styles.label}>{formatMonthDisplay(value)}</span>
       
-      <button 
-        type="button" 
-        onClick={handleNext} 
+      <button
+        type="button"
+        onClick={handleNext}
         className={styles.btn}
         aria-label="next month"
+        disabled={isCurrentMonth}
+        style={isCurrentMonth ? { opacity: 0.35, cursor: 'default' } : undefined}
       >
         <ChevronRight size={20} />
       </button>

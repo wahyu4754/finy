@@ -428,17 +428,33 @@ revoke all on function consume_ai_credit() from public;
 grant execute on function consume_ai_credit() to authenticated;
 
 -- Refund 1 credit (used when AI call fails after pre-deduction)
-create or replace function refund_ai_credit()
-returns void as $$
+-- Superseded by migration 015: the zero-argument refund_ai_credit() this replaces was
+-- SECURITY DEFINER and granted to `authenticated`, so any logged-in user could mint
+-- unlimited credits from the browser. Refunds now require an explicit user id and are
+-- restricted to service_role (Edge Functions using a service-role client).
+create or replace function public.refund_ai_credit_for(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
-  update users
-    set ai_credits = ai_credits + 1
-    where id = auth.uid();
-end;
-$$ language plpgsql security definer;
+  if p_user_id is null then
+    raise exception 'refund_ai_credit_for: p_user_id is required';
+  end if;
 
-revoke all on function refund_ai_credit() from public;
-grant execute on function refund_ai_credit() to authenticated;
+  update public.users
+  set ai_credits = ai_credits + 1
+  where id = p_user_id;
+end;
+$$;
+
+revoke all on function public.refund_ai_credit_for(uuid) from public;
+revoke all on function public.refund_ai_credit_for(uuid) from anon;
+revoke all on function public.refund_ai_credit_for(uuid) from authenticated;
+grant execute on function public.refund_ai_credit_for(uuid) to service_role;
+
+drop function if exists public.refund_ai_credit();
 
 -- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- H-3: Rate limiting system
