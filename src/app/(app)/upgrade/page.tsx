@@ -15,14 +15,15 @@ export default function UpgradePage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { showToast } = useToastStore();
-  const { createSubscription, loading, checkVipStatus } = usePurchasesStore();
+  const { createSubscription, loading, checkVipStatus, verifyPayment } = usePurchasesStore();
+  const { fetchProfile } = useAuthStore();
   
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
 
   const handleSubscribe = async () => {
     showToast('Menghubungkan ke Midtrans...', 'info');
     
-    const { error, snapToken, redirectUrl } = await createSubscription(selectedPlan);
+    const { error, snapToken, redirectUrl, orderId } = await createSubscription(selectedPlan);
     
     if (error) {
       showToast(typeof error === 'string' ? error : 'Gagal memproses transaksi. Coba lagi.', 'error');
@@ -39,12 +40,23 @@ export default function UpgradePage() {
       window.snap.pay(snapToken, {
         onSuccess: async (result) => {
           console.log('Midtrans payment success:', result);
-          showToast('Pembayaran berhasil! Mengaktifkan Finy Pro...', 'success');
+          showToast('Pembayaran berhasil! Mengaktifkan Finy Pro...', 'info');
+          const targetOrderId = result.order_id || orderId;
+          if (targetOrderId) {
+            await verifyPayment(targetOrderId);
+          }
+          await fetchProfile();
           await checkVipStatus();
+          showToast('Selamat! Finy Pro aktif.', 'success');
           router.push('/home');
         },
-        onPending: (result) => {
+        onPending: async (result) => {
           console.log('Midtrans payment pending:', result);
+          const targetOrderId = result.order_id || orderId;
+          if (targetOrderId) {
+            await verifyPayment(targetOrderId);
+          }
+          await checkVipStatus();
           showToast('Pembayaran menunggu penyelesaian.', 'info');
           router.push('/home');
         },

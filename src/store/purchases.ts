@@ -15,7 +15,8 @@ interface PurchaseState {
   loading: boolean;
   
   checkVipStatus: () => Promise<void>;
-  createSubscription: (plan: 'monthly' | 'annual') => Promise<{ error: any; snapToken?: string; redirectUrl?: string }>;
+  createSubscription: (plan: 'monthly' | 'annual') => Promise<{ error: any; snapToken?: string; redirectUrl?: string; orderId?: string }>;
+  verifyPayment: (orderId: string) => Promise<{ success: boolean; isVip: boolean; error?: string }>;
 }
 
 export const usePurchasesStore = create<PurchaseState>((set, get) => ({
@@ -24,6 +25,11 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
   loading: false,
 
   checkVipStatus: async () => {
+    // 1. Fetch fresh user profile from DB to refresh is_vip
+    try {
+      await useAuthStore.getState().fetchProfile();
+    } catch (_) {}
+
     const user = useAuthStore.getState().user;
     if (!user) return;
 
@@ -57,6 +63,24 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
     set({ isVip: false, vipUntil: null, loading: false });
   },
 
+  verifyPayment: async (orderId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { order_id: orderId }
+      });
+      if (error) throw error;
+      if (data?.is_vip) {
+        set({ isVip: true });
+        await useAuthStore.getState().fetchProfile();
+        return { success: true, isVip: true };
+      }
+      return { success: false, isVip: false };
+    } catch (err: any) {
+      console.error('verifyPayment error:', err);
+      return { success: false, isVip: false, error: err?.message };
+    }
+  },
+
   createSubscription: async (plan) => {
     set({ loading: true });
     
@@ -81,7 +105,8 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
       return { 
         error: null, 
         snapToken: data?.snap_token, 
-        redirectUrl: data?.redirect_url 
+        redirectUrl: data?.redirect_url,
+        orderId: data?.order_id
       };
     } catch (err: any) {
       console.error('Failed calling create-subscription edge function:', err);
