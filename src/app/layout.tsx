@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import AppShell from "../components/layout/AppShell";
 import "./globals.css";
 
@@ -33,9 +34,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const snapUrl =
+    process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL ||
+    "https://app.sandbox.midtrans.com/snap/snap.js";
+  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
+
   return (
     <html lang="id" className={`${inter.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <Script
+          id="midtrans-snap"
+          src={snapUrl}
+          data-client-key={clientKey}
+          strategy="afterInteractive"
+        />
         <AppShell>
           {children}
         </AppShell>
@@ -43,3 +55,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -1,5 +1,5 @@
 // supabase/functions/create-subscription/index.ts
-// Creates a Midtrans Snap token for Finy Pro subscription payments (Web/PWA)
+// Creates a Midtrans Snap transaction token for Finy Pro subscription payments (Web/PWA).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -8,9 +8,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-
-// ─── Security: max body size ─────────────────────────────────────────
-const MAX_BODY_SIZE = 10 * 1024; // 10 KB (tiny JSON payload)
 
 // ─── Plan Configuration ─────────────────────────────────────────────
 const PLANS: Record<string, { label: string; amount: number; durationDays: number }> = {
@@ -25,7 +22,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // ── Auth: extract user from JWT ──────────────────────────────
+    // ── 1. Auth: extract user from JWT ───────────────────────────
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return jsonError('Missing authorization header', 401);
@@ -44,27 +41,27 @@ Deno.serve(async (req) => {
       return jsonError('Unauthorized', 401);
     }
 
-    // ── H-3: Rate limiting (strict — prevents order spam) ────────
+    // ── 2. Rate limiting (strict — prevents order creation spam) ─
     const { data: allowed } = await userClient.rpc('check_rate_limit', {
       p_action: 'create-subscription',
       p_max: 5,
       p_window_minutes: 10,
     });
     if (!allowed) {
-      return jsonError('Terlalu banyak permintaan. Coba lagi nanti.', 429);
+      return jsonError('Terlalu banyak permintaan transaksi. Coba lagi nanti.', 429);
     }
 
-    // ── Parse request body ───────────────────────────────────────
+    // ── 3. Parse and validate request body ───────────────────────
     const body = await req.json();
     const plan = body.plan as string;
 
     if (!plan || !PLANS[plan]) {
-      return jsonError('Invalid plan. Use "monthly" or "annual".', 400);
+      return jsonError('Paket tidak valid. Pilih "monthly" atau "annual".', 400);
     }
 
     const planConfig = PLANS[plan];
 
-    // ── Fetch user profile ───────────────────────────────────────
+    // ── 4. Fetch user profile ────────────────────────────────────
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     const { data: profile } = await adminClient
       .from('users')
@@ -72,64 +69,83 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    // ── M-7: Generate unique order ID (random, no user ID leak) ──
+    // ── 5. Generate unique merchant order ID ─────────────────────
     const orderId = `FINY-${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 
-    // ── Create Finpay payment link ───────────────────────────────
-    const finpayMerchantId = Deno.env.get('FINPAY_MERCHANT_ID');
-    const finpaySecretKey = Deno.env.get('FINPAY_SECRET_KEY');
-    const finpayBaseUrl = Deno.env.get('FINPAY_BASE_URL') || 'https://devo.finnet.co.id/pg/payment/card/initiate';
-
-    if (!finpayMerchantId || !finpaySecretKey) {
-      return jsonError('FINPAY_SECRET_KEY or FINPAY_MERCHANT_ID is not configured', 500);
+    // ── 6. Prepare Midtrans Snap API call ────────────────────────
+    const serverKey = Deno.env.get('MIDTRANS_SERVER_KEY');
+    if (!serverKey) {
+      console.error('MIDTRANS_SERVER_KEY is not configured in Edge Function secrets');
+      return jsonError('Gerbang pembayaran belum dikonfigurasi di server (MIDTRANS_SERVER_KEY missing).', 500);
     }
 
-    const authString = btoa(`${finpayMerchantId}:${finpaySecretKey}`);
+    const isProduction =
+      Deno.env.get('MIDTRANS_IS_PRODUCTION') === 'true' ||
+      Deno.env.get('MIDTRANS_PRODUCTION') === 'true' ||
+      Deno.env.get('MIDTRANS_PRODUCTION') === '1';
+    const snapUrl = isProduction
+      ? 'https://app.midtrans.com/snap/v1/transactions'
+      : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
-    const finpayPayload = {
-      customer: {
-        email: user.email || profile?.email || '',
-        firstName: profile?.name?.split(' ')[0] || user.email?.split('@')[0] || 'User',
-        lastName: profile?.name?.split(' ').slice(1).join(' ') || 'Finy',
-        mobilePhone: profile?.phone || '+628123456789'
+    const customerName = profile?.name || user.email?.split('@')[0] || 'User';
+    const nameParts = customerName.trim().split(' ');
+    const firstName = nameParts[0] || 'User';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const customerEmail = user.email || profile?.email || 'user@finy.app';
+
+    const snapPayload = {
+      transaction_details: {
+        order_id: orderId,
+        gross_amount: planConfig.amount, // integer IDR for Snap
       },
-      order: {
-        id: orderId,
-        amount: String(planConfig.amount),
-        description: planConfig.label
+      customer_details: {
+        first_name: firstName,
+        last_name: lastName,
+        email: customerEmail,
       },
-      url: {
-        callbackUrl: 'https://hahjrdldqbxbzufzazbm.supabase.co/functions/v1/finpay-webhook'
+      item_details: [
+        {
+          id: plan,
+          price: planConfig.amount,
+          quantity: 1,
+          name: planConfig.label,
+        },
+      ],
+      credit_card: {
+        secure: true,
       },
-      sourceOfFunds: {
-        type: 'finpaycode'
-      }
     };
 
-    const finpayRes = await fetch(finpayBaseUrl, {
+    const authHeaderBasic = `Basic ${btoa(serverKey + ':')}`;
+
+    const midtransRes = await fetch(snapUrl, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${authString}`,
+        'Authorization': authHeaderBasic,
       },
-      body: JSON.stringify(finpayPayload),
+      body: JSON.stringify(snapPayload),
     });
 
-    const finpayData = await finpayRes.json();
+    const midtransData = await midtransRes.json();
 
-    if (!finpayRes.ok) {
-      console.error('Finpay error:', finpayData);
-      return jsonError(
-        finpayData?.responseMessage || finpayData?.error_messages?.join(', ') || finpayData?.message || 'Failed to create payment',
-        finpayRes.status
-      );
+    if (!midtransRes.ok || !midtransData.token) {
+      console.error('Midtrans Snap error:', {
+        status: midtransRes.status,
+        data: midtransData,
+      });
+      const errorMsg =
+        midtransData?.error_messages?.join(', ') ||
+        midtransData?.message ||
+        'Gagal membuat sesi pembayaran Midtrans.';
+      return jsonError(errorMsg, midtransRes.status);
     }
 
-    // ── Save pending subscription to DB ──────────────────────────
+    // ── 7. Record pending subscription in DB ─────────────────────
     const expiresAt = new Date(Date.now() + planConfig.durationDays * 86400000).toISOString();
 
-    await adminClient.from('subscriptions').insert({
+    const { error: insertError } = await adminClient.from('subscriptions').insert({
       user_id: user.id,
       order_id: orderId,
       plan,
@@ -138,11 +154,16 @@ Deno.serve(async (req) => {
       expires_at: expiresAt,
     });
 
-    // ── Return redirect url to frontend ──────────────────────────
+    if (insertError) {
+      console.error('Failed to insert subscription record:', insertError);
+      // Still proceed with returning token, as orderId is valid and webhook can reconcile
+    }
+
+    // ── 8. Return Snap token and redirect URL to frontend ────────
     return new Response(
       JSON.stringify({
-        snap_token: finpayData.paymentCode || finpayData.token || finpayData.snap_token || 'finpay-token',
-        redirect_url: finpayData.redirecturl || finpayData.redirect_url || '',
+        snap_token: midtransData.token,
+        redirect_url: midtransData.redirect_url,
         order_id: orderId,
       }),
       {
@@ -152,8 +173,7 @@ Deno.serve(async (req) => {
     );
   } catch (err: any) {
     console.error('create-subscription error:', err);
-    // M-6: Don't expose internal error details
-    return jsonError('Gagal membuat pembayaran. Coba lagi nanti.', 500);
+    return jsonError('Gagal memproses sesi pembayaran. Coba lagi nanti.', 500);
   }
 });
 

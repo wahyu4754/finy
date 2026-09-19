@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "integrate-midtrans-payments": {
+      "source": "veritrans/midtrans-agent-skills",
+      "sourceType": "github",
+      "skillPath": "integrate-midtrans-payments/SKILL.md",
+      "computedHash": "0274d11da0ae845d4dbe6fe3e620730ef2922fed3f3ee162ce7285300837a75b"
+    },
+    "security-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/security-review/SKILL.md",
+      "computedHash": "1eee1e41aa0a0e75dbbe0cac387e3d61bedf51af1888f184301a173731e6973e"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

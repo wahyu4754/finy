@@ -104,3 +104,40 @@ export interface ParsedReceipt {
   suggested_category?: string;
   confidence?: number;
 }
+
+export interface SnapResult {
+  status_code?: string;
+  status_message?: string[];
+  transaction_id?: string;
+  order_id?: string;
+  gross_amount?: string;
+  payment_type?: string;
+  transaction_time?: string;
+  transaction_status?: string;
+  fraud_status?: string;
+  pdf_url?: string;
+  finish_redirect_url?: string;
+}
+
+export interface SnapCallbacks {
+  onSuccess?: (result: SnapResult) => void;
+  onPending?: (result: SnapResult) => void;
+  onError?: (result: SnapResult) => void;
+  onClose?: () => void;
+}
+
+export interface SnapPayOptions extends SnapCallbacks {
+  uiMode?: 'deeplink' | 'qr';
+  skipOrderSummary?: boolean;
+}
+
+declare global {
+  interface Window {
+    snap?: {
+      pay: (token: string, options?: SnapPayOptions) => void;
+      embed: (token: string, options: { embedId: string } & SnapPayOptions) => void;
+      hide: () => void;
+    };
+  }
+}
+

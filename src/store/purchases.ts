@@ -67,7 +67,16 @@ export const usePurchasesStore = create<PurchaseState>((set, get) => ({
       });
 
       set({ loading: false });
-      if (error) throw error;
+      if (error) {
+        let msg = error.message;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) msg = body.error;
+          }
+        } catch (_) {}
+        throw new Error(msg || 'Gagal memproses transaksi.');
+      }
       
       return { 
         error: null, 

@@ -15,30 +15,57 @@ export default function UpgradePage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { showToast } = useToastStore();
-  const { createSubscription, loading } = usePurchasesStore();
+  const { createSubscription, loading, checkVipStatus } = usePurchasesStore();
   
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
 
   const handleSubscribe = async () => {
-    showToast('Menghubungkan ke gerbang pembayaran...', 'info');
+    showToast('Menghubungkan ke Midtrans...', 'info');
     
-    const { error, redirectUrl } = await createSubscription(selectedPlan);
+    const { error, snapToken, redirectUrl } = await createSubscription(selectedPlan);
     
     if (error) {
-      showToast('Gagal memproses transaksi. Coba lagi.', 'error');
+      showToast(typeof error === 'string' ? error : 'Gagal memproses transaksi. Coba lagi.', 'error');
       return;
     }
     
-    if (!redirectUrl) {
-      showToast('Gagal memproses transaksi.', 'error');
+    if (!snapToken && !redirectUrl) {
+      showToast('Gagal memproses sesi pembayaran.', 'error');
       return;
     }
 
-    showToast('Membuka halaman pembayaran Finpay...', 'success');
-    if (redirectUrl.startsWith('/')) {
-      router.push(redirectUrl);
+    // Try Midtrans Snap Popup first
+    if (typeof window !== 'undefined' && window.snap && snapToken) {
+      window.snap.pay(snapToken, {
+        onSuccess: async (result) => {
+          console.log('Midtrans payment success:', result);
+          showToast('Pembayaran berhasil! Mengaktifkan Finy Pro...', 'success');
+          await checkVipStatus();
+          router.push('/home');
+        },
+        onPending: (result) => {
+          console.log('Midtrans payment pending:', result);
+          showToast('Pembayaran menunggu penyelesaian.', 'info');
+          router.push('/home');
+        },
+        onError: (result) => {
+          console.error('Midtrans payment error:', result);
+          showToast('Pembayaran gagal atau ditolak.', 'error');
+        },
+        onClose: () => {
+          showToast('Jendela pembayaran ditutup.', 'info');
+        },
+      });
+    } else if (redirectUrl) {
+      // Fallback to Midtrans hosted redirect
+      showToast('Membuka halaman pembayaran Midtrans...', 'info');
+      if (redirectUrl.startsWith('/')) {
+        router.push(redirectUrl);
+      } else {
+        window.location.href = redirectUrl;
+      }
     } else {
-      window.location.href = redirectUrl;
+      showToast('Gagal memuat pembayaran Midtrans.', 'error');
     }
   };
 
@@ -131,10 +158,10 @@ export default function UpgradePage() {
         </div>
       </Card>
 
-      {/* Finpay payment billing details */}
+      {/* Midtrans payment billing details */}
       <div className={styles.billingCard}>
         <ShieldCheck size={16} className={styles.shieldIcon} />
-        <span>Pembayaran aman via Finpay Gateway</span>
+        <span>Pembayaran aman via Midtrans (QRIS, GoPay, Transfer Bank, Kartu)</span>
       </div>
 
       {/* CTA Button */}

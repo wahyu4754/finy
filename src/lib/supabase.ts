@@ -5,7 +5,7 @@ let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-placeho
 
 // Fallback to a valid default if empty
 if (!supabaseUrl) {
-  supabaseUrl = 'https://lihlutroaroqrmtlsnan.supabase.co';
+  supabaseUrl = 'https://hahjrdldqbxbzufzazbm.supabase.co';
 }
 
 // Auto-prefix protocol if user omitted it in env
