@@ -105,39 +105,20 @@ Deno.serve(async (req) => {
 
     // ── 5. Process States Idempotently ───────────────────────────
     if (isSuccess && subscription.status !== 'active') {
-      const now = new Date().toISOString();
+      // M-10: Use activate_subscription RPC for atomic activation + VIP extension
+      const durationDays = subscription.plan === 'annual' ? 365 : 30;
+      const { error: activateError } = await adminClient.rpc('activate_subscription', {
+        p_order_id: orderId,
+        p_duration_days: durationDays,
+      });
 
-      // Update subscription to active
-      const { error: subUpdateError } = await adminClient
-        .from('subscriptions')
-        .update({
-          status: 'active',
-          payment_type: paymentType || null,
-          midtrans_transaction_id: transactionId || null,
-          paid_at: now,
-        })
-        .eq('order_id', orderId);
-
-      if (subUpdateError) {
-        console.error('Failed to update subscription:', subUpdateError);
+      if (activateError) {
+        console.error('activate_subscription RPC failed:', activateError);
+      } else {
+        console.log(`🎉 VIP activated for user ${subscription.user_id.slice(0, 8)}...`);
       }
 
-      // Activate user VIP status
-      const { error: userUpdateError } = await adminClient
-        .from('users')
-        .update({
-          is_vip: true,
-          vip_until: subscription.expires_at,
-        })
-        .eq('id', subscription.user_id);
-
-      if (userUpdateError) {
-        console.error('Failed to update user VIP status:', userUpdateError);
-      }
-
-      console.log(`🎉 VIP activated for user ${subscription.user_id.slice(0, 8)}... until ${subscription.expires_at}`);
-
-      // ── 6. Referral Rewards ─────────────────────────────────────
+      // H-03: Use atomic referral reward RPC
       const { data: subscribedUser } = await adminClient
         .from('users')
         .select('referred_by_code')
@@ -145,40 +126,11 @@ Deno.serve(async (req) => {
         .single();
 
       if (subscribedUser?.referred_by_code) {
-        const { data: referralUse } = await adminClient
-          .from('referral_uses')
-          .select('id, referrer_id')
-          .eq('referred_user_id', subscription.user_id)
-          .eq('rewarded', false)
-          .maybeSingle();
-
-        if (referralUse) {
-          await adminClient
-            .from('referral_uses')
-            .update({ rewarded: true })
-            .eq('id', referralUse.id);
-
-          await adminClient.rpc('increment_ai_credits', {
-            p_user_id: referralUse.referrer_id,
-            p_amount: 5,
-          });
-
-          const { count } = await adminClient
-            .from('referral_uses')
-            .select('id', { count: 'exact', head: true })
-            .eq('referrer_id', referralUse.referrer_id)
-            .eq('rewarded', true);
-
-          if (count && count % 3 === 0) {
-            await adminClient
-              .from('users')
-              .update({ has_vip_voucher: true })
-              .eq('id', referralUse.referrer_id);
-
-            console.log(`🎁 VIP voucher granted to referrer ${referralUse.referrer_id.slice(0, 8)}... (${count} rewarded referrals)`);
-          }
-
-          console.log(`💰 +5 AI credits rewarded to referrer ${referralUse.referrer_id.slice(0, 8)}...`);
+        const { data: referralResult } = await adminClient.rpc('grant_referral_reward', {
+          p_referred_user_id: subscription.user_id,
+        });
+        if (referralResult?.[0]?.credits_awarded) {
+          console.log(`💰 +${referralResult[0].credits_awarded} AI credits rewarded to referrer`);
         }
       }
     } else if (isFailed && subscription.status === 'pending') {
@@ -213,8 +165,10 @@ Deno.serve(async (req) => {
     });
   } catch (err: any) {
     console.error('midtrans-webhook error:', err);
+    // H-04: Return 500 so Midtrans retries with backoff.
+    // Only return 200 for signature-valid-but-unknown-order and already-processed (above).
     return new Response(JSON.stringify({ error: err?.message || 'Internal error' }), {
-      status: 200, // Return 200 to prevent infinite provider retry on uncaught application logic
+      status: 500,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   }

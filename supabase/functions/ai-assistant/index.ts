@@ -52,7 +52,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // H-1: Daily limit checks are enforced on the client side
+    // C-16: Server-side daily quota (Free: 1/day, VIP: 50/day)
+    const { data: quota } = await supabaseClient.rpc('check_ai_daily_quota');
+    if (quota && quota[0] && quota[0].used_today >= quota[0].max_allowed) {
+      return new Response(JSON.stringify({ error: 'INSUFFICIENT_CREDITS' }), {
+        status: 402,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
 
     // ── H-2: Input size validation ─────────────────────────────────
     const bodyText = await req.text();
@@ -241,7 +248,8 @@ ATURAN WAJIB:
       parsed = { reply: rawText, transactions_to_add: [] };
     }
 
-    // Credit was already deducted atomically — no need for a separate update
+    // C-16: Record this AI call in the daily quota
+    await supabaseClient.rpc('consume_ai_daily_quota');
 
     return new Response(JSON.stringify(parsed), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },

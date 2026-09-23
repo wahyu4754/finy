@@ -124,14 +124,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
 
     const savedTx = data as Transaction;
 
-    // Persist the wallet balance only now that the transaction row exists
-    const targetWallet = wallets.find(w => w.id === tx.wallet_id);
-    if (targetWallet) {
-      await supabase
-        .from('wallets')
-        .update({ balance: targetWallet.balance })
-        .eq('id', tx.wallet_id);
-    }
+    // Wallet balance is updated atomically by a DB trigger (migration 017).
 
     // Update transactions list
     const transactions = [savedTx, ...get().transactions];
@@ -180,19 +173,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       .update(patch)
       .eq('id', id);
 
-    // Also update wallet balance(s) in Supabase database
-    if (oldTx) {
-      const walletsToUpdate = [oldTx.wallet_id, patch.wallet_id || oldTx.wallet_id];
-      for (const walletId of walletsToUpdate) {
-        const targetWallet = wallets.find(w => w.id === walletId);
-        if (targetWallet) {
-          await supabase
-            .from('wallets')
-            .update({ balance: targetWallet.balance })
-            .eq('id', walletId);
-        }
-      }
-    }
+    // Wallet balance is updated atomically by a DB trigger (migration 017).
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(`finy_txs_${userId}`, JSON.stringify(transactions));
@@ -226,16 +207,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       .delete()
       .eq('id', id);
 
-    // Also update wallet balance in Supabase database
-    if (oldTx) {
-      const targetWallet = wallets.find(w => w.id === oldTx.wallet_id);
-      if (targetWallet) {
-        await supabase
-          .from('wallets')
-          .update({ balance: targetWallet.balance })
-          .eq('id', oldTx.wallet_id);
-      }
-    }
+    // Wallet balance is updated atomically by a DB trigger (migration 017).
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(`finy_txs_${userId}`, JSON.stringify(transactions));

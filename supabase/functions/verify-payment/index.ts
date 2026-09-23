@@ -42,21 +42,29 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 2. Fetch subscription belonging to this user
+    // 2. Fetch subscription belonging to this user (M-13: only pending can be activated)
     const { data: subscription, error: subError } = await adminClient
       .from('subscriptions')
       .select('*')
       .eq('order_id', orderId)
       .eq('user_id', user.id)
+      .eq('status', 'pending')
       .single();
 
     if (subError || !subscription) {
-      return jsonResponse({ error: 'Subscription order not found' }, 404);
-    }
+      // Check if already active (idempotent re-verify)
+      const { data: activeSub } = await adminClient
+        .from('subscriptions')
+        .select('*')
+        .eq('order_id', orderId)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
 
-    // If already active, return immediately
-    if (subscription.status === 'active') {
-      return jsonResponse({ success: true, is_vip: true, status: 'active' }, 200);
+      if (activeSub) {
+        return jsonResponse({ success: true, is_vip: true, status: 'active' }, 200);
+      }
+      return jsonResponse({ error: 'Subscription order not found', success: false, is_vip: false }, 404);
     }
 
     // 3. Query Midtrans Core API for order status
@@ -99,29 +107,27 @@ Deno.serve(async (req) => {
       (transactionStatus === 'capture' && fraudStatus === 'accept');
 
     if (isSuccess) {
-      const now = new Date().toISOString();
+      // M-13: Validate gross_amount matches subscription
+      const expectedAmount = String(subscription.amount || '');
+      const receivedAmount = String(midtransData.gross_amount || '').replace(/\..*/, '');
+      if (expectedAmount && receivedAmount && expectedAmount !== receivedAmount) {
+        console.error(`Amount mismatch: expected ${expectedAmount}, got ${receivedAmount}`);
+        return jsonResponse({ error: 'Amount mismatch', success: false, is_vip: false }, 403);
+      }
 
-      // Update subscription
-      await adminClient
-        .from('subscriptions')
-        .update({
-          status: 'active',
-          payment_type: paymentType || null,
-          midtrans_transaction_id: transactionId || null,
-          paid_at: now,
-        })
-        .eq('order_id', orderId);
+      // M-10: Use activate_subscription RPC for atomic activation + VIP extension
+      const durationDays = subscription.plan === 'annual' ? 365 : 30;
+      const { data: activated, error: activateError } = await adminClient.rpc('activate_subscription', {
+        p_order_id: orderId,
+        p_duration_days: durationDays,
+      });
 
-      // Activate VIP on users table
-      await adminClient
-        .from('users')
-        .update({
-          is_vip: true,
-          vip_until: subscription.expires_at,
-        })
-        .eq('id', user.id);
+      if (activateError) {
+        console.error('activate_subscription RPC failed:', activateError);
+        return jsonResponse({ error: 'Failed to activate subscription', success: false, is_vip: false }, 500);
+      }
 
-      // Handle referral rewards
+      // H-03: Use atomic referral reward RPC
       const { data: profile } = await adminClient
         .from('users')
         .select('referred_by_code')
@@ -129,45 +135,25 @@ Deno.serve(async (req) => {
         .single();
 
       if (profile?.referred_by_code) {
-        const { data: referralUse } = await adminClient
-          .from('referral_uses')
-          .select('id, referrer_id')
-          .eq('referred_user_id', user.id)
-          .eq('rewarded', false)
-          .maybeSingle();
-
-        if (referralUse) {
-          await adminClient
-            .from('referral_uses')
-            .update({ rewarded: true })
-            .eq('id', referralUse.id);
-
-          await adminClient.rpc('increment_ai_credits', {
-            p_user_id: referralUse.referrer_id,
-            p_amount: 5,
-          });
-
-          const { count } = await adminClient
-            .from('referral_uses')
-            .select('id', { count: 'exact', head: true })
-            .eq('referrer_id', referralUse.referrer_id)
-            .eq('rewarded', true);
-
-          if (count && count % 3 === 0) {
-            await adminClient
-              .from('users')
-              .update({ has_vip_voucher: true })
-              .eq('id', referralUse.referrer_id);
-          }
-        }
+        await adminClient.rpc('grant_referral_reward', {
+          p_referred_user_id: user.id,
+        });
       }
 
-      console.log(`🎉 Direct verification activated VIP for user ${user.id}`);
+      // M-12: Confirm VIP was actually set
+      const { data: updatedUser } = await adminClient
+        .from('users')
+        .select('is_vip')
+        .eq('id', user.id)
+        .single();
+
+      const isVip = updatedUser?.is_vip === true;
+      console.log(`🎉 Direct verification for user ${user.id}: activated=${activated}, isVip=${isVip}`);
       return jsonResponse({
-        success: true,
-        is_vip: true,
+        success: isVip,
+        is_vip: isVip,
         status: 'active',
-        message: 'Subscription successfully activated',
+        message: isVip ? 'Subscription successfully activated' : 'Subscription activated but VIP update pending',
       }, 200);
     }
 
