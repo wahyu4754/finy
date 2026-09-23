@@ -21,7 +21,7 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, initialized: authInitialized, loading: authLoading, initialize: initAuth } = useAuthStore();
+  const { user, session, initialized: authInitialized, loading: authLoading, initialize: initAuth } = useAuthStore();
   const { isLocked, initialized: secInitialized, initialize: initSec, lock } = useSecurityStore();
   const [mounted, setMounted] = useState(false);
 
@@ -65,12 +65,15 @@ export default function AppShell({ children }: AppShellProps) {
 
     const isAuthPage = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up') || pathname.startsWith('/auth/callback');
 
-    if (!user && !isAuthPage && !authLoading) {
+    // Gate on session, not user: the profile is still in flight while a valid
+    // session already exists, and a null user here ping-ponged authenticated
+    // visitors between /home and /sign-in.
+    if (!session && !isAuthPage && !authLoading) {
       router.replace('/sign-in');
-    } else if (user && isAuthPage) {
+    } else if (session && isAuthPage) {
       router.replace('/home');
     }
-  }, [user, authInitialized, authLoading, pathname, mounted, router]);
+  }, [session, authInitialized, authLoading, pathname, mounted, router]);
 
   if (!mounted || !authInitialized || !secInitialized) {
     return (

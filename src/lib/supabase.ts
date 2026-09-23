@@ -1,32 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-
-let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-placeholder-anon-key';
-
-// Fallback to a valid default if empty
-if (!supabaseUrl) {
-  supabaseUrl = 'https://hahjrdldqbxbzufzazbm.supabase.co';
-}
-
-// Auto-prefix protocol if user omitted it in env
-if (supabaseUrl && !supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
-  supabaseUrl = `https://${supabaseUrl}`;
-}
+import { createBrowserClient } from '@supabase/ssr';
+import { supabaseUrl, supabaseAnonKey } from './supabase-config';
 
 export let supabase: any;
 
 try {
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  // auth.storage is deliberately absent: @supabase/ssr ignores it and always
+  // persists the session to cookies, which is what lets middleware read it.
+  supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      storage: {
-        getItem: (key) => typeof window !== 'undefined' ? localStorage.getItem(key) : null,
-        setItem: (key, value) => { if (typeof window !== 'undefined') localStorage.setItem(key, value); },
-        removeItem: (key) => { if (typeof window !== 'undefined') localStorage.removeItem(key); },
-      },
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
     },
+    isSingleton: true,
   });
 } catch (e) {
   console.warn('Failed to create Supabase client (using offline fallback mock):', e);

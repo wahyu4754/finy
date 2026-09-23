@@ -6,15 +6,15 @@ import { useAuthStore } from '../store/auth';
 
 export default function RootPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  // Gate on session, not user: the profile object is still being fetched while
+  // a valid session already exists, and redirecting on a null user bounced
+  // authenticated visitors back to /sign-in.
+  const { session, initialized } = useAuthStore();
 
   useEffect(() => {
-    if (user) {
-      router.replace('/home');
-    } else {
-      router.replace('/sign-in');
-    }
-  }, [user, router]);
+    if (!initialized) return;
+    router.replace(session ? '/home' : '/sign-in');
+  }, [session, initialized, router]);
 
   return null; // Redirect page doesn't render anything
 }
