@@ -99,7 +99,7 @@ export default function ReferralPage() {
       <Card className={styles.codeCard}>
         <span className={styles.codeLabel}>{t('referralCode')}</span>
         <div className={styles.codeRow}>
-          <span className={styles.codeText}>{stats?.code || 'FINYWEB3'}</span>
+          <span className={styles.codeText}>{stats?.code || '—'}</span>
           <button onClick={handleCopy} className={styles.copyBtn} aria-label="copy code">
             {copied ? <Check size={18} className={styles.checkIcon} /> : <Copy size={18} />}
           </button>

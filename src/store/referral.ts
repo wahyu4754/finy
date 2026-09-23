@@ -36,17 +36,7 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
     if (!error && data) {
       set({ stats: data as ReferralStats, loading: false });
     } else {
-      // Mock / Offline mode fallback
-      set({
-        stats: {
-          code: 'FINYWEB3',
-          total: 2,
-          subscribed: 1,
-          has_voucher: false,
-          credits: 10
-        },
-        loading: false
-      });
+      set({ stats: null, loading: false });
     }
   },
 

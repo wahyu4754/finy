@@ -30,25 +30,10 @@ interface TransactionState {
   deleteCategory: (id: string) => Promise<{ error: any }>;
 }
 
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'cat-makan', user_id: null, name: 'Makan', icon: 'Utensils', color: '#F59E0B', type: 'expense', is_default: true },
-  { id: 'cat-transport', user_id: null, name: 'Transport', icon: 'Car', color: '#3B82F6', type: 'expense', is_default: true },
-  { id: 'cat-belanja', user_id: null, name: 'Belanja', icon: 'ShoppingBag', color: '#8B5CF6', type: 'expense', is_default: true },
-  { id: 'cat-tagihan', user_id: null, name: 'Tagihan', icon: 'Receipt', color: '#06B6D4', type: 'expense', is_default: true },
-  { id: 'cat-lainnya', user_id: null, name: 'Lainnya', icon: 'Package', color: '#6B7280', type: 'expense', is_default: true },
-  { id: 'cat-gaji', user_id: null, name: 'Gaji', icon: 'Briefcase', color: '#10B981', type: 'income', is_default: true },
-  { id: 'cat-bonus', user_id: null, name: 'Bonus', icon: 'Gift', color: '#C5F23C', type: 'income', is_default: true }
-];
-
-const DEFAULT_WALLETS = (userId: string): Wallet[] => [
-  { id: 'wallet-dompet', user_id: userId, name: 'Dompet Tunai', type: 'cash', balance: 500000, is_default: true, created_at: new Date().toISOString() },
-  { id: 'wallet-bank', user_id: userId, name: 'Rekening Bank', type: 'bank', balance: 2500000, is_default: false, created_at: new Date().toISOString() }
-];
-
 export const useTransactionStore = create<TransactionState>((set, get) => ({
   transactions: [],
   wallets: [],
-  categories: DEFAULT_CATEGORIES,
+  categories: [],
   loading: false,
   isAddTxOpen: false,
   setAddTxOpen: (open) => set({ isAddTxOpen: open }),
@@ -276,7 +261,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
         localStorage.setItem(`finy_wallets_${userId}`, JSON.stringify(data));
       }
     } else {
-      // Local cache fallback
+      // Keep existing state; try localStorage cache as last resort
       if (typeof window !== 'undefined') {
         const cached = localStorage.getItem(`finy_wallets_${userId}`);
         if (cached) {
@@ -285,12 +270,6 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
             return;
           } catch (e) {}
         }
-      }
-      // Create defaults
-      const defaults = DEFAULT_WALLETS(userId);
-      set({ wallets: defaults });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`finy_wallets_${userId}`, JSON.stringify(defaults));
       }
     }
   },
@@ -377,8 +356,6 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
 
     if (!error && data) {
       set({ categories: data as Category[] });
-    } else {
-      set({ categories: DEFAULT_CATEGORIES });
     }
   },
 

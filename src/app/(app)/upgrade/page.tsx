@@ -42,12 +42,24 @@ export default function UpgradePage() {
           console.log('Midtrans payment success:', result);
           showToast('Pembayaran berhasil! Mengaktifkan Finy Pro...', 'info');
           const targetOrderId = result.order_id || orderId;
+
+          let confirmed = false;
           if (targetOrderId) {
-            await verifyPayment(targetOrderId);
+            for (const delay of [1000, 3000, 5000]) {
+              const res = await verifyPayment(targetOrderId);
+              if (res.isVip) { confirmed = true; break; }
+              await new Promise(r => setTimeout(r, delay));
+            }
           }
+
           await fetchProfile();
           await checkVipStatus();
-          showToast('Selamat! Finy Pro aktif.', 'success');
+
+          if (confirmed) {
+            showToast('Selamat! Finy Pro aktif.', 'success');
+          } else {
+            showToast('Pembayaran diterima. Status VIP akan aktif segera setelah verifikasi selesai.', 'info');
+          }
           router.push('/home');
         },
         onPending: async (result) => {
@@ -123,10 +135,10 @@ export default function UpgradePage() {
           <div className={styles.planBadge}>Hemat 33%</div>
           <span className={styles.planName}>Tahunan (Annual)</span>
           <h4 className={styles.planPrice}>
-            Rp 119.000<span className={styles.pricePeriod}>/tahun</span>
+            Rp 119.999<span className={styles.pricePeriod}>/tahun</span>
           </h4>
           <span className={styles.equivalentPrice}>
-            Setara Rp 9.900 / bulan
+            Setara Rp 10.000 / bulan
           </span>
         </Card>
 
@@ -138,7 +150,7 @@ export default function UpgradePage() {
         >
           <span className={styles.planName}>Bulanan (Monthly)</span>
           <h4 className={styles.planPrice}>
-            Rp 14.900<span className={styles.pricePeriod}>/bulan</span>
+            Rp 14.999<span className={styles.pricePeriod}>/bulan</span>
           </h4>
           <span className={styles.equivalentPrice}>
             Bayar per bulan, batalkan kapan saja

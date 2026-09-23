@@ -15,7 +15,6 @@ interface AuthState {
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   fetchProfile: () => Promise<void>;
-  claimTrial: () => Promise<void>;
   deleteAccount: () => Promise<{ error: any }>;
   updateProfile: (data: Partial<User>) => Promise<{ error: any }>;
 }
@@ -155,26 +154,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     } catch (e) {
       console.warn('Failed to fetch user profile from Supabase:', e);
-    }
-  },
-
-  claimTrial: async () => {
-    const { session } = get();
-    if (!session?.user) return;
-
-    // Call public function or update locally
-    const trialEnds = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { error } = await supabase.rpc('claim_trial'); // Matches DB RPC
-
-    if (!error) {
-      await get().fetchProfile();
-    } else {
-      // Direct local update if mock
-      const updatedUser = get().user ? { ...get().user!, trial_ends_at: trialEnds } : null;
-      set({ user: updatedUser });
-      if (typeof window !== 'undefined' && updatedUser) {
-        localStorage.setItem('finy_user_profile', JSON.stringify(updatedUser));
-      }
     }
   },
 

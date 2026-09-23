@@ -164,7 +164,7 @@ async function parseReceiptWithFallback(
   imageBase64: string,
   mediaType: string
 ): Promise<any> {
-  const models = ['gemini-3.1-flash-lite', 'gemini-2.0-flash'];
+  const models = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
   const errors: string[] = [];
 
   for (const model of models) {

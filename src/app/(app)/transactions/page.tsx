@@ -29,8 +29,8 @@ export default function TransactionsPage() {
 
   // Group by date
   const filtered = transactions.filter((tx) => {
-    const matchesSearch = tx.note.toLowerCase().includes(search.toLowerCase()) || 
-                          tx.category?.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (tx.note ?? '').toLowerCase().includes(search.toLowerCase()) ||
+                          (tx.category?.name ?? '').toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === 'all' || tx.type === typeFilter;
     return matchesSearch && matchesType;
   });

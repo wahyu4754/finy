@@ -1,15 +1,21 @@
-const CACHE_NAME = 'finy-web-cache-v1';
+const CACHE_NAME = 'finy-web-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
-  '/favicon.ico'
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {
+  // cache.addAll() is atomic: a single 404 (the old /favicon.ico entry) rejected the
+  // whole batch, so `install` failed, the worker never reached `activate`, and the PWA
+  // was permanently un-installable. Individual adds + allSettled keep one missing asset
+  // from blocking the rest.
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(ASSETS_TO_CACHE.map((asset) => cache.add(asset)))
+    )
   );
   self.skipWaiting();
 });

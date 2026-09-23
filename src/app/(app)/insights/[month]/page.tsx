@@ -86,7 +86,7 @@ export default function InsightDetailPage() {
           <div className={styles.insightsList}>
             <h4 className={styles.sectionTitle}>Poin Penting Analisis</h4>
             
-            {data.insights.map((insight, idx) => {
+            {(data.insights ?? []).map((insight, idx) => {
               const Icon = iconMap[insight.type] || Lightbulb;
               const color = colorMap[insight.type] || '#6B7280';
 

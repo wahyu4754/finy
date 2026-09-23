@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: "Finy - Catatan Keuangan Pintar",
   description: "Finy membantu mencatat, menganalisis, dan memantau keuanganmu secara pintar dan otomatis.",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
