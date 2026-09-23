@@ -70,6 +70,7 @@ export const translations: TranslationDict = {
   quickActions: { id: 'Aksi Cepat', en: 'Quick Actions' },
   scanReceipt: { id: 'Scan Struk', en: 'Scan Receipt' },
   aiAssistant: { id: 'Asisten AI', en: 'AI Assistant' },
+  insightsTitle: { id: 'Analisis AI', en: 'AI Insights' },
   streakDays: { id: 'hari beruntun', en: 'day streak' },
 
   // Stats Screen

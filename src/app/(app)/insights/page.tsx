@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Sparkles, Lock, ChevronRight, Calendar } from 'lucide-react';
+import { ArrowLeft, Sparkles, Lock, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../../lib/i18n';
 import { useFeatureAccess } from '../../../hooks/useFeatureAccess';
 import { formatMonthDisplay } from '../../../lib/format';
@@ -11,7 +11,17 @@ import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import styles from './Insights.module.css';
 
-const MONTHS_LIST = ['2026-07', '2026-06', '2026-05'];
+function generateMonthList(count: number): string[] {
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    months.push(`${y}-${m}`);
+  }
+  return months;
+}
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -51,7 +61,7 @@ export default function InsightsPage() {
 
       {/* List of months */}
       <div className={styles.list}>
-        {MONTHS_LIST.map((m) => (
+        {generateMonthList(6).map((m) => (
           <Link key={m} href={`/insights/${m}`}>
             <Card className={styles.row} variant="outline">
               <div className={styles.rowLeft}>

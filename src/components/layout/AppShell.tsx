@@ -22,7 +22,7 @@ export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, initialized: authInitialized, loading: authLoading, initialize: initAuth } = useAuthStore();
-  const { isLocked, initialized: secInitialized, initialize: initSec } = useSecurityStore();
+  const { isLocked, initialized: secInitialized, initialize: initSec, lock } = useSecurityStore();
   const [mounted, setMounted] = useState(false);
 
   // Initialize stores on mount
@@ -40,6 +40,15 @@ export default function AppShell({ children }: AppShellProps) {
       );
     }
   }, [initAuth, initSec]);
+
+  // Lock the app when the tab/window becomes hidden (PIN re-entry on return)
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') lock();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [lock]);
 
   // Sync VIP status on user update
   // Depends on user?.id, not user: fetchProfile() replaces the profile object on

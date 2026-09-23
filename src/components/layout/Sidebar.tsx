@@ -4,9 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
-  Home, GraphNew as BarChart3, Widget2 as Grid3X3, Wallet2 as Wallet, 
-  Target, ClockCircle as Clock, Stars as Sparkles, Download, 
-  Gift, Shield, User, Logout as LogOut, Global as Globe
+  Home, GraphNew as BarChart3, Widget2 as Grid3X3, Wallet2 as Wallet,
+  Target, ClockCircle as Clock, Stars as Sparkles, Download,
+  Gift, Shield, User, Logout as LogOut, Global as Globe, ChartSquare
 } from '@solar-icons/react';
 import { useTranslation } from '../../lib/i18n';
 import { useAuthStore } from '../../store/auth';
@@ -30,8 +30,9 @@ export default function Sidebar() {
     { label: t('tabCategories'), path: '/tools', icon: Grid3X3 },
     { label: 'Recurring', path: '/recurring', icon: Clock },
     { label: t('aiAssistant'), path: '/ai-assistant', icon: Sparkles, highlight: true },
-    { label: t('exportTitle'), path: '/export', icon: Download, disabled: true },
-    { label: t('referralTitle'), path: '/referral', icon: Gift, disabled: true },
+    { label: t('insightsTitle'), path: '/insights', icon: ChartSquare, highlight: true },
+    { label: t('exportTitle'), path: '/export', icon: Download },
+    { label: t('referralTitle'), path: '/referral', icon: Gift },
     { label: t('securityTitle'), path: '/security', icon: Shield },
     { label: t('tabProfile'), path: '/profile', icon: User },
   ];
@@ -73,21 +74,6 @@ export default function Sidebar() {
         {menuItems.map((item, idx) => {
           const Icon = item.icon;
           const isActive = pathname === item.path;
-
-          if (item.disabled) {
-            return (
-              <button
-                key={idx}
-                onClick={() => showToast('Fitur ini sedang dalam pengembangan.', 'info')}
-                className={`${styles.menuLink} ${item.highlight ? styles.highlight : ''}`}
-                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', opacity: 0.55 }}
-                type="button"
-              >
-                <Icon size={18} className={styles.icon} />
-                <span>{item.label} <span style={{ fontSize: '10px', opacity: 0.8 }}>(Soon)</span></span>
-              </button>
-            );
-          }
 
           return (
             <Link 

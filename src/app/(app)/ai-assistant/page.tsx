@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   AltArrowLeft as ArrowLeft, TrashBin2 as Trash2, Stars as Sparkles, Plain as Send, 
   Microphone as Mic, Gallery as Image, Camera, ChatSquareCode as Bot 
@@ -45,8 +45,16 @@ export default function AiAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open camera/file picker when arriving via ?scan=true deep link
+  useEffect(() => {
+    if (searchParams.get('scan') === 'true' && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, [searchParams]);
 
   // Load chat history from localStorage
   useEffect(() => {
@@ -356,6 +364,7 @@ export default function AiAssistantPage() {
         <input
           type="file"
           accept="image/*"
+          capture="environment"
           ref={fileInputRef}
           onChange={handleImageChange}
           className={styles.hiddenFile}

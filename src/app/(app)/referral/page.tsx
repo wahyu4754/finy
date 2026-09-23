@@ -32,7 +32,8 @@ export default function ReferralPage() {
 
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+    generateCode();
+  }, [fetchStats, generateCode]);
 
   const handleCopy = () => {
     if (!stats?.code) return;
