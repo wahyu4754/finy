@@ -27,6 +27,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   streakJustIncreased: false,
 
   initialize: async () => {
+    if (get().initialized) return;
+
     // 1. Try to load cached profile from localStorage
     if (typeof window !== 'undefined') {
       const cached = localStorage.getItem('finy_user_profile');
@@ -39,37 +41,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
 
-    const timeout = (ms: number) => new Promise<never>((_, reject) => 
+    // 2. Subscribe BEFORE loading the session. This used to happen after an
+    // awaited getSession() that raced a 2s timeout; when the race was lost the
+    // store was left with no listener, session: null and initialized: true, and
+    // every redirect guard reads that as "signed out" — bouncing an otherwise
+    // valid session back to /sign-in. Subscribing first means the store still
+    // learns the real session state even if the load below is slow or fails.
+    supabase.auth.onAuthStateChange(async (_event: any, currentSession: any) => {
+      set({ session: currentSession });
+
+      if (currentSession?.user) {
+        set({ loading: true });
+        try {
+          await get().fetchProfile();
+        } catch (err) {
+          console.warn('Failed to load profile after auth change:', err);
+        }
+        set({ loading: false });
+      } else {
+        set({ user: null, loading: false });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('finy_user_profile');
+        }
+      }
+    });
+
+    const timeout = (ms: number) => new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Network timeout')), ms)
     );
 
     try {
-      // 2. Fetch session from Supabase with 2s timeout
-      const getSessionPromise = supabase.auth.getSession();
-      const { data: { session } } = await Promise.race([getSessionPromise, timeout(2000)]) as any;
-      set({ session, loading: !session });
-
-      // 3. Listen to auth changes
-      supabase.auth.onAuthStateChange(async (event: any, currentSession: any) => {
-        set({ session: currentSession });
-        
-        if (currentSession?.user) {
-          set({ loading: true });
-          try {
-            await Promise.race([get().fetchProfile(), timeout(2000)]);
-          } catch (err) {}
-          set({ loading: false });
-        } else {
-          set({ user: null, loading: false });
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('finy_user_profile');
-          }
-        }
-      });
+      // 3. Fetch session from Supabase. getSession() reads the cookie and only
+      // hits the network to refresh a near-expiry token, so the budget is
+      // generous — the previous 2s cap tripped on ordinary latency.
+      const { data: { session } } = await Promise.race([
+        supabase.auth.getSession(),
+        timeout(15000),
+      ]) as any;
+      set({ session, initialized: true, loading: false });
     } catch (error) {
-      console.warn('Supabase Auth init timed out or failed (running in offline/mock mode):', error);
-    } finally {
-      set({ initialized: true, loading: false });
+      console.warn('Supabase Auth init timed out or failed:', error);
+      // Leave loading true: the guards only redirect when !loading, so an
+      // unresolved session must not be reported as a signed-out user. The
+      // listener above clears it once the real state arrives.
+      set({ initialized: true });
     }
   },
 
