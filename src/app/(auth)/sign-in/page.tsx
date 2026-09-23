@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, LogIn } from 'lucide-react';
@@ -30,6 +30,24 @@ export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // /auth/callback forwards OAuth and code-exchange failures as ?error=, and
+  // middleware.ts redirects a suspended account here with ?suspended=1 after
+  // clearing its session. Read from window.location rather than
+  // useSearchParams() so the page keeps prerendering without a Suspense boundary.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reason = params.get('error');
+    const suspended = params.get('suspended');
+    if (!reason && !suspended) return;
+    showToast(
+      suspended
+        ? 'Akun Anda ditangguhkan. Hubungi dukungan jika ini terasa keliru.'
+        : `Gagal masuk: ${reason}`,
+      'error'
+    );
+    window.history.replaceState(null, '', '/sign-in');
+  }, [showToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

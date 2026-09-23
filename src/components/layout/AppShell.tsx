@@ -83,6 +83,19 @@ export default function AppShell({ children }: AppShellProps) {
     );
   }
 
+  // The CMS renders its own chrome and has its own server-side gate
+  // (requireAdmin() in src/lib/admin-auth.ts), so it must not inherit the
+  // consumer Sidebar/BottomNav, and the client-side PIN lock does not apply —
+  // an admin session is authorized per-request on the server, not by AppLock.
+  if (pathname.startsWith('/admin')) {
+    return (
+      <>
+        <ToastContainer />
+        {children}
+      </>
+    );
+  }
+
   // If locked, render security overlay instead of the app
   if (isLocked) {
     return <AppLock />;
