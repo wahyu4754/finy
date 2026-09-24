@@ -3,10 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  User, Wallet2 as Wallet, Target, ClockCircle as Clock, Gift, Shield, 
+import {
+  User, Wallet2 as Wallet, Target, ClockCircle as Clock, Gift, Shield,
   Download, Logout as LogOut, AltArrowRight as ChevronRight, Crown, Global as Globe, AltArrowLeft as ArrowLeft,
-  Widget2 as Grid3X3
+  Widget2 as Grid3X3, ChartSquare
 } from '@solar-icons/react';
 import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
@@ -49,11 +49,12 @@ export default function ProfilePage() {
     }
   };
 
-  const menuItems = [
+  const menuItems: Array<{ label: string; path: string; icon: any; pro?: boolean }> = [
     { label: t('walletManageTitle'), path: '/wallets', icon: Wallet },
     { label: t('budgetTitle'), path: '/budget', icon: Target },
     { label: 'Kelola Kategori', path: '/categories', icon: Grid3X3 },
-    { label: 'Transaksi Berulang (Recurring)', path: '/recurring', icon: Clock },
+    { label: 'Analisis Bulanan', path: '/insights', icon: ChartSquare },
+    { label: 'Transaksi Berulang', path: '/recurring', icon: Clock, pro: true },
     { label: t('referralTitle'), path: '/referral', icon: Gift },
     { label: t('securityTitle'), path: '/security', icon: Shield },
     { label: t('exportTitle'), path: '/export', icon: Download },
@@ -123,7 +124,10 @@ export default function ProfilePage() {
                   <Icon size={18} className={styles.menuIcon} />
                   <span className={styles.menuLabel}>{item.label}</span>
                 </div>
-                <ChevronRight size={16} className={styles.chevron} />
+                <div className={styles.menuRight}>
+                  {item.pro && !isVip && <span className={styles.proBadge}>PRO</span>}
+                  <ChevronRight size={16} className={styles.chevron} />
+                </div>
               </Card>
             </Link>
           );

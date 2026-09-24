@@ -39,20 +39,23 @@ export async function scanReceipt(file: File): Promise<ParsedReceipt> {
 /**
  * Returns the AI conclusion for `month`, sending the real figures for that month.
  *
- * The edge function answers from its `ai_conclusions` cache when it has one, so a
- * repeat visit costs no credit; pass `refresh: true` to force a regeneration.
+ * The edge function answers from its `ai_conclusions` cache when it has one and
+ * refuses to regenerate a stored month, so this is a one-per-month allowance that
+ * costs the user nothing. Only `month` values that have already ended are accepted;
+ * an attempt on the running month comes back as MONTH_NOT_CLOSED.
+ *
  * Throws an Error whose message is the server's machine-readable code
- * (INSUFFICIENT_CREDITS, RATE_LIMITED, AI_SERVICE_ERROR, …) so the caller can
- * translate it — never a fabricated conclusion.
+ * (MONTH_NOT_CLOSED, RATE_LIMITED, AI_SERVICE_ERROR, …) so the caller can translate
+ * it — never a fabricated conclusion. A thrown error means nothing was stored, so
+ * calling again is always safe.
  */
 export async function generateMonthlyConclusion(
   month: string,
-  stats: MonthlyStats,
-  options?: { refresh?: boolean }
+  stats: MonthlyStats
 ): Promise<AIConclusion> {
   try {
     const { data, error } = await supabase.functions.invoke('monthly-conclusion', {
-      body: { month, stats, refresh: options?.refresh === true },
+      body: { month, stats },
     });
 
     // functions-js reports a non-2xx as FunctionsHttpError whose .message is the generic

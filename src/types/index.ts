@@ -49,6 +49,8 @@ export interface Transaction {
   transaction_date: string;
   is_recurring: boolean;
   recurring_period?: string;
+  /** Set when the daily cron created this row from a recurring rule (migration 022). */
+  recurring_rule_id?: string | null;
   created_by_ai: boolean;
   created_at: string;
   category?: Category;

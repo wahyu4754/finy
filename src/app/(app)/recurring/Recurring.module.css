@@ -27,6 +27,54 @@
   color: var(--color-ink);
 }
 
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+}
+
+/* How the automation works — worth stating plainly, since it writes to the ledger
+   without the user doing anything. */
+.infoStrip {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background-color: var(--color-info-subtle);
+  color: var(--color-ink-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.infoStrip svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-info);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blockTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
 /* List rules */
 .list {
   display: flex;
@@ -36,25 +84,35 @@
 
 .item {
   padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.itemHeader {
+.itemMain {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .itemLeft {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  min-width: 0;
+}
+
+.itemText {
+  min-width: 0;
 }
 
 .clockIcon {
   color: var(--color-ink-soft);
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .itemName {
@@ -64,6 +122,10 @@
   display: block;
 }
 
+.itemName.muted {
+  color: var(--color-ink-muted);
+}
+
 .itemDesc {
   font-size: 11px;
   color: var(--color-ink-soft);
@@ -71,11 +133,19 @@
   display: block;
 }
 
+.itemWallet {
+  font-size: 10px;
+  color: var(--color-ink-soft);
+  margin-top: 3px;
+  display: block;
+}
+
 .itemRight {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .itemAmount {
@@ -85,6 +155,27 @@
 
 .expense { color: var(--color-danger); }
 .income { color: var(--color-success); }
+
+.itemActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.toggleLabel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+}
 
 .checkbox {
   width: 18px;
@@ -96,9 +187,93 @@
   flex-shrink: 0;
 }
 
+.actionBtns {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dangerBtn {
+  color: var(--color-danger);
+  border-color: var(--color-danger-subtle);
+}
+
+.pausedBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--color-ink-muted);
+  background-color: var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
 .loading {
   text-align: center;
   font-size: 14px;
   color: var(--color-ink-muted);
   padding: 40px;
+}
+
+/* Pro gate */
+.lockHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 24px 0;
+}
+
+.lockCircle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lockTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.lockSubtitle {
+  font-size: 12px;
+  color: var(--color-ink-muted);
+  line-height: 1.55;
+  max-width: 300px;
+}
+
+.lockHero .list {
+  width: 100%;
+  text-align: left;
+}
+
+.upgradeBtn {
+  font-size: 14px;
+  font-weight: 700;
+  width: 100%;
 }

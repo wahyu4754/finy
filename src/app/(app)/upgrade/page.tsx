@@ -95,10 +95,11 @@ export default function UpgradePage() {
 
   const features = [
     { name: 'Catatan Transaksi Harian', free: true, pro: true },
+    { name: 'Analisis AI Bulanan (1x per bulan)', free: true, pro: true },
     { name: 'Kategori Kustom Baru', free: false, pro: true },
     { name: 'Dompet Terpisah (Multi-wallets)', free: false, pro: true },
     { name: 'Atur Anggaran per Kategori', free: false, pro: true },
-    { name: 'Pengeluaran Berulang (Recurring)', free: false, pro: true },
+    { name: 'Transaksi Berulang Otomatis', free: false, pro: true },
     { name: 'Asisten AI Obrolan Tanpa Batas', free: false, pro: true },
     { name: 'Ekspor Data Laporan (CSV/PDF)', free: false, pro: true },
     { name: 'Backup Cloud Sinkronisasi Realtime', free: false, pro: true },

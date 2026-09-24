@@ -11,13 +11,15 @@ import { useTranslation } from '../../../lib/i18n';
 import { useAuthStore } from '../../../store/auth';
 import { useTransactionStore } from '../../../store/transactions';
 import { useBudget } from '../../../hooks/useBudget';
-import { formatIDR, getCurrentMonth, getToday, formatCompact, calculateStreak } from '../../../lib/format';
+import { useMonthlyInsights } from '../../../hooks/useMonthlyInsights';
+import { formatIDR, getCurrentMonth, getToday, formatCompact, calculateStreak, formatMonthDisplay } from '../../../lib/format';
 import { useToastStore } from '../../../store/toast';
 import Card from '../../../components/ui/Card';
 import StreakBadge from '../../../components/ui/StreakBadge';
 import ProgressBar from '../../../components/ui/ProgressBar';
 import CategoryIcon from '../../../components/ui/CategoryIcon';
 import StreakShareModal from '../../../components/StreakShareModal';
+import RecurringActivityBanner from '../../../components/RecurringActivityBanner';
 import FinyTree from '../../../components/ui/FinyTree';
 import { History } from 'lucide-react';
 import styles from './Home.module.css';
@@ -42,12 +44,15 @@ export default function HomePage() {
     setAddTxOpen
   } = useTransactionStore();
 
-  const { 
-    totalBudget, 
-    totalSpent, 
-    getProgressColor 
+  const {
+    totalBudget,
+    totalSpent,
+    getProgressColor
   } = useBudget(currentMonth);
 
+  // Only the three most recent closed months are checked here: the prompt is about
+  // the month that just ended, and each month costs a count query.
+  const { pendingMonth } = useMonthlyInsights(3);
   // Swipeable wallet carousel state
   const [selectedWalletIndex, setSelectedWalletIndex] = useState(0);
 
@@ -287,6 +292,11 @@ export default function HomePage() {
         ))}
       </div>
 
+      {/* What the daily cron recorded from recurring rules, with an undo */}
+      <section className={styles.section}>
+        <RecurringActivityBanner />
+      </section>
+
       {/* Quick Action Grid */}
       <section className={styles.section}>
         <h4 className={styles.sectionTitle}>{t('quickActions')}</h4>
@@ -320,6 +330,30 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Monthly AI analysis — only offered once the month has actually ended */}
+      {pendingMonth && (
+        <section className={styles.section}>
+          <Link href={`/insights/${pendingMonth}`}>
+            <Card variant="glass" className={styles.insightPrompt}>
+              <div className={styles.insightPromptLeft}>
+                <div className={styles.insightPromptIcon}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h4 className={styles.insightPromptTitle}>
+                    Analisis {formatMonthDisplay(pendingMonth)} siap dibuat
+                  </h4>
+                  <p className={styles.insightPromptDesc}>
+                    Bulan sudah berakhir — buat ringkasan AI gratis, 1x per bulan.
+                  </p>
+                </div>
+              </div>
+              <ChevronRight size={18} className={styles.insightPromptChevron} />
+            </Card>
+          </Link>
+        </section>
+      )}
 
       {/* Budget Progress Card */}
       {totalBudget > 0 && (

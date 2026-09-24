@@ -471,3 +471,52 @@
   width: 20px;
   border-radius: 4px;
 }
+
+/* Monthly AI analysis prompt */
+.insightPrompt {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.insightPromptLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.insightPromptIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.insightPromptTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.insightPromptDesc {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+  margin-top: 2px;
+}
+
+.insightPromptChevron {
+  color: var(--color-ink-soft);
+  flex-shrink: 0;
+}

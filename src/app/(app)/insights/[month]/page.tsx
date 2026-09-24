@@ -2,14 +2,13 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Sparkles, AlertTriangle, Lightbulb, Award, Receipt, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Sparkles, AlertTriangle, Lightbulb, Award, Receipt, CalendarClock } from 'lucide-react';
 import { useToastStore } from '../../../../store/toast';
 import { generateMonthlyConclusion } from '../../../../lib/scanReceipt';
-import { buildMonthlyStats } from '../../../../lib/monthlyStats';
+import { buildMonthlyStats, isMonthClosed, getMonthCloseDate } from '../../../../lib/monthlyStats';
 import { formatMonthDisplay, formatDate } from '../../../../lib/format';
 import { AIConclusion } from '../../../../types';
 import Card from '../../../../components/ui/Card';
-import Button from '../../../../components/ui/Button';
 import EmptyState from '../../../../components/ui/EmptyState';
 import styles from './InsightDetail.module.css';
 
@@ -27,9 +26,9 @@ const colorMap = {
 
 // The edge function throws machine-readable codes; map the ones worth explaining.
 const ERROR_MESSAGES: Record<string, string> = {
-  INSUFFICIENT_CREDITS: 'Kredit AI Anda habis. Kumpulkan kredit dari referral atau upgrade ke Finy Pro.',
   RATE_LIMITED: 'Terlalu banyak permintaan. Coba lagi beberapa menit.',
   NO_DATA: 'Belum ada transaksi yang tercatat di bulan ini.',
+  MONTH_NOT_CLOSED: 'Bulan ini belum berakhir, jadi belum bisa dianalisis.',
   AI_NOT_CONFIGURED: 'Layanan AI belum dikonfigurasi. Hubungi dukungan Finy.',
   AI_SERVICE_ERROR: 'Layanan AI sedang tidak dapat dihubungi. Coba lagi sebentar.',
   AI_EMPTY_RESPONSE: 'Layanan AI tidak mengembalikan jawaban. Coba lagi sebentar.',
@@ -51,12 +50,16 @@ export default function InsightDetailPage() {
   const [isEmpty, setIsEmpty] = useState(false);
   const inFlightRef = useRef<string | null>(null);
 
-  const load = useCallback(async (refresh: boolean) => {
+  // Recomputed per render on purpose: a page left open across midnight on the last
+  // day of a month should notice that the month has closed.
+  const monthClosed = !!month && isMonthClosed(month);
+
+  const load = useCallback(async () => {
     if (!month) return;
 
     // React runs effects twice in dev (StrictMode). Both runs would miss the cache
-    // because neither has written it yet, so each consumed a credit for one view.
-    if (!refresh && inFlightRef.current === month) return;
+    // because neither has written it yet, so each would fire a Gemini call for one view.
+    if (inFlightRef.current === month) return;
     inFlightRef.current = month;
 
     setLoading(true);
@@ -64,7 +67,7 @@ export default function InsightDetailPage() {
     try {
       const stats = await buildMonthlyStats(month);
 
-      // Never pay Gemini to analyse an empty month — that is how the feature used to
+      // Never ask Gemini to analyse an empty month — that is how the feature used to
       // produce confident, entirely invented prose.
       if (stats.transactionCount === 0) {
         setData(null);
@@ -73,8 +76,14 @@ export default function InsightDetailPage() {
       }
 
       setIsEmpty(false);
-      setData(await generateMonthlyConclusion(month, stats, { refresh }));
+      const conclusion = await generateMonthlyConclusion(month, stats);
+      setData(conclusion);
+
+      // Only a freshly generated answer is worth announcing; a cached one was
+      // already shown to this user before.
+      if (!conclusion.cached) showToast(`Analisis ${formatMonthDisplay(month)} berhasil dibuat`, 'success');
     } catch (err) {
+      // Nothing was stored server-side, so the retry below is a genuine retry.
       const code = err instanceof Error ? err.message : '';
       const message = ERROR_MESSAGES[code] ?? 'Gagal memuat kesimpulan AI. Coba lagi nanti.';
       setData(null);
@@ -88,8 +97,12 @@ export default function InsightDetailPage() {
   }, [month, showToast]);
 
   useEffect(() => {
-    load(false);
-  }, [load]);
+    if (!month || !monthClosed) {
+      setLoading(false);
+      return;
+    }
+    load();
+  }, [load, month, monthClosed]);
 
   return (
     <div className={styles.container}>
@@ -102,7 +115,15 @@ export default function InsightDetailPage() {
         <div style={{ width: 24 }} />
       </header>
 
-      {loading ? (
+      {!monthClosed ? (
+        <EmptyState
+          title="Bulan ini masih berjalan"
+          description={`Analisis ${month ? formatMonthDisplay(month) : ''} bisa dibuat mulai ${month ? formatDate(getMonthCloseDate(month)) : ''}, setelah semua transaksi bulan ini tercatat.`}
+          icon={<CalendarClock size={24} />}
+          actionText="Catat Transaksi"
+          onActionClick={() => router.push('/transaction/new')}
+        />
+      ) : loading ? (
         <div className={styles.loadingContainer}>
           <div className={styles.spinner} />
           <p className={styles.loadingText}>AI sedang menganalisis keuangan Anda...</p>
@@ -113,7 +134,7 @@ export default function InsightDetailPage() {
           description={error}
           icon={<AlertTriangle size={24} />}
           actionText="Coba Lagi"
-          onActionClick={() => load(false)}
+          onActionClick={load}
         />
       ) : isEmpty || !data ? (
         <EmptyState
@@ -164,16 +185,8 @@ export default function InsightDetailPage() {
           <div className={styles.footer}>
             <span className={styles.meta}>
               Dibuat {data.generated_at ? formatDate(data.generated_at) : ''}
-              {data.cached ? ' · tersimpan' : ''}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<RefreshCw size={14} />}
-              onClick={() => load(true)}
-            >
-              Buat Ulang
-            </Button>
+            <span className={styles.meta}>Gratis · tersimpan permanen</span>
           </div>
         </div>
       )}

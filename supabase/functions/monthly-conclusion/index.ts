@@ -2,17 +2,13 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-
-// Service-role client, used only for refund_ai_credit_for(). That RPC is revoked from
-// anon/authenticated by migration 015: the zero-argument refund_ai_credit() it replaces
-// was SECURITY DEFINER and granted to `authenticated`, so any logged-in user could call
-// it in a loop from the browser and mint unlimited AI credits.
-const adminClient = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
+
+// The monthly analysis is a free feature now, so the only thing standing between
+// an anonymous caller and a Gemini bill is this: one analysis per user per closed
+// month, cached in ai_conclusions. Everything that used to guard the credit
+// balance (consume_ai_credit / refund_ai_credit_for and the service-role client
+// they needed) is gone with it.
 
 // Preflight must echo the request headers the browser sends, or the real POST is never
 // made and the page only sees an opaque network error. Same shape as delete-account,
@@ -37,8 +33,33 @@ const PASSTHROUGH_CODES = new Set([
   'AI_SERVICE_ERROR',
   'AI_EMPTY_RESPONSE',
   'AI_INVALID_RESPONSE',
+  'MONTH_NOT_CLOSED',
   'UNAUTHORIZED',
 ]);
+
+/**
+ * A month may only be analysed once it has ended — the point of the feature is a
+ * closed-book summary, and analysing the running month would produce a different
+ * answer every time the user records another transaction.
+ *
+ * Read in WIB rather than from the container clock, which is UTC: for an Indonesian
+ * user the month turns over 7 hours earlier locally than it does here, and the
+ * client gates on its own local date. Disagreeing with the browser at that boundary
+ * would show a button the server then refuses.
+ */
+function isMonthClosed(month: string, now: Date = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(now);
+
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
+  const mon = parts.find((p) => p.type === 'month')?.value ?? '';
+  if (!year || !mon) return false;
+
+  return month < `${year}-${mon}`;
+}
 
 function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
@@ -123,18 +144,6 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: CORS });
   }
 
-  let userId: string | null = null;
-  let creditConsumed = false;
-
-  // Single refund path: only ever runs after consume_ai_credit() actually succeeded,
-  // and only once, so a failure can't top a user's balance up twice.
-  const refundCredit = async () => {
-    if (!creditConsumed || !userId) return;
-    creditConsumed = false;
-    const { error } = await adminClient.rpc('refund_ai_credit_for', { p_user_id: userId });
-    if (error) console.error('[monthly-conclusion] refund failed:', error.message);
-  };
-
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('UNAUTHORIZED');
@@ -147,9 +156,8 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) throw new Error('UNAUTHORIZED');
-    userId = user.id;
 
-    // ── H-2: Input size validation — before anything is charged ────
+    // ── H-2: Input size validation ────────────────────────────────
     const bodyText = await req.text();
     if (bodyText.length > MAX_BODY_SIZE) return jsonResponse({ error: 'PAYLOAD_TOO_LARGE' }, 413);
 
@@ -165,25 +173,29 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'INVALID_MONTH' }, 400);
     }
 
+    if (!isMonthClosed(month)) return jsonResponse({ error: 'MONTH_NOT_CLOSED' }, 403);
+
     // C-11: the client nests its figures under `stats`; accept top-level too so the
     // contract can't silently drift back into analysing all zeros.
     const stats = normalizeStats(parsedBody?.stats ?? parsedBody);
 
-    // D-10: cache-first. ai_conclusions is unique per (user_id, month), so a repeat
-    // visit returns the stored analysis with no credit spent and no Gemini call.
-    if (parsedBody?.refresh !== true) {
-      const { data: cached, error: cacheError } = await supabaseClient
-        .from('ai_conclusions')
-        .select('id, user_id, month, summary, insights, generated_at')
-        .eq('user_id', user.id)
-        .eq('month', month)
-        .maybeSingle();
+    // The one-per-month allowance is enforced by this read, not by a counter:
+    // ai_conclusions is unique per (user_id, month) and is only written after a
+    // successful Gemini round-trip. A failed attempt stores nothing, so the user
+    // can retry as often as they need — which is the behaviour they expect from a
+    // free feature. `refresh` is deliberately not honoured: regenerating a stored
+    // month would make the free allowance unlimited.
+    const { data: cached, error: cacheError } = await supabaseClient
+      .from('ai_conclusions')
+      .select('id, user_id, month, summary, insights, generated_at')
+      .eq('user_id', user.id)
+      .eq('month', month)
+      .maybeSingle();
 
-      if (cacheError) {
-        console.error('[monthly-conclusion] cache read failed:', cacheError.message);
-      } else if (cached?.summary) {
-        return jsonResponse({ ...cached, cached: true });
-      }
+    if (cacheError) {
+      console.error('[monthly-conclusion] cache read failed:', cacheError.message);
+    } else if (cached?.summary) {
+      return jsonResponse({ ...cached, cached: true });
     }
 
     // Nothing to analyse: refuse rather than pay Gemini to invent a month from zeros.
@@ -198,11 +210,6 @@ Deno.serve(async (req) => {
       p_window_minutes: 10,
     });
     if (!allowed) return jsonResponse({ error: 'RATE_LIMITED' }, 429);
-
-    // ── H-1: Atomic credit consumption ─────────────────────────────
-    const { data: creditOk } = await supabaseClient.rpc('consume_ai_credit');
-    if (!creditOk) return jsonResponse({ error: 'INSUFFICIENT_CREDITS' }, 402);
-    creditConsumed = true;
 
     const raw = await callGemini(systemPrompt, [
       { role: 'user', parts: [{ text: buildUserPrompt(month, stats) }] },
@@ -221,8 +228,9 @@ Deno.serve(async (req) => {
 
     if (!summary || insights.length === 0) throw new Error('AI_INVALID_RESPONSE');
 
-    // Persist so the next visit is free. A failed write must not fail the request —
-    // the analysis has already been paid for, so serve it and let the next visit retry.
+    // Storing the result is what makes this a one-per-month feature, so a failed
+    // write is logged rather than thrown: the analysis was already produced and
+    // the user should see it. The next visit simply regenerates.
     const { data: saved, error: upsertError } = await supabaseClient
       .from('ai_conclusions')
       .upsert({ user_id: user.id, month, summary, insights }, { onConflict: 'user_id,month' })
@@ -241,7 +249,6 @@ Deno.serve(async (req) => {
       cached: false,
     });
   } catch (error: any) {
-    await refundCredit();
     console.error('[monthly-conclusion] Error:', error);
     const message = String(error?.message ?? '');
     const code = PASSTHROUGH_CODES.has(message) ? message : 'ANALYSIS_FAILED';

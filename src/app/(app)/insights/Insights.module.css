@@ -79,51 +79,56 @@
   color: var(--color-ink-soft);
 }
 
-/* Locked Gate */
-.containerLocked {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80vh;
-  width: 100%;
+.intro {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-ink-muted);
+  margin: -8px 0 4px;
 }
 
-.lockHero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  max-width: 320px;
-  padding: 24px;
+/* Month state pill */
+.statusBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.lockCircle {
-  width: 72px;
-  height: 72px;
+.statusSaved {
+  color: var(--color-success);
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
+.statusReady {
+  color: var(--color-primary);
+  background-color: var(--color-accent);
+}
+
+.statusEmpty,
+.statusLocked {
+  color: var(--color-ink-muted);
+  background-color: var(--color-border-subtle);
+}
+
+.lockedCircle {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background-color: var(--color-border-subtle);
-  color: var(--color-ink-soft);
+  color: var(--color-ink-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
-.lockTitle {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--color-ink);
+.clickableRow {
+  cursor: pointer;
 }
 
-.lockSubtitle {
-  font-size: 13px;
-  color: var(--color-ink-muted);
-  margin-top: 4px;
-  line-height: 1.4;
-  margin-bottom: 24px;
-}
-
-.upgradeBtn {
-  font-size: 14px;
-  font-weight: 700;
+.disabledRow {
+  opacity: 0.65;
+  cursor: default;
 }

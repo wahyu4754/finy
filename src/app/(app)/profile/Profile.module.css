@@ -159,6 +159,23 @@
   color: var(--color-ink-soft);
 }
 
+.menuRight {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.proBadge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 6px;
+  border-radius: 5px;
+  color: var(--color-primary);
+  background-color: var(--color-accent);
+}
+
 /* Footer Actions */
 .footerActions {
   display: flex;

@@ -3,50 +3,23 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Sparkles, Lock, ChevronRight } from 'lucide-react';
-import { useTranslation } from '../../../lib/i18n';
-import { useFeatureAccess } from '../../../hooks/useFeatureAccess';
-import { formatMonthDisplay } from '../../../lib/format';
+import { ArrowLeft, Sparkles, Lock, ChevronRight, CheckCircle2, Inbox } from 'lucide-react';
+import { useMonthlyInsights, MonthStatus } from '../../../hooks/useMonthlyInsights';
+import { formatMonthDisplay, formatDate } from '../../../lib/format';
+import { getRunningMonth, getMonthCloseDate } from '../../../lib/monthlyStats';
 import Card from '../../../components/ui/Card';
-import Button from '../../../components/ui/Button';
 import styles from './Insights.module.css';
 
-function generateMonthList(count: number): string[] {
-  const months: string[] = [];
-  const now = new Date();
-  for (let i = 0; i < count; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    months.push(`${y}-${m}`);
-  }
-  return months;
-}
+const STATUS_COPY: Record<MonthStatus, { label: string; className: string }> = {
+  saved: { label: 'Tersimpan', className: styles.statusSaved },
+  ready: { label: 'Siap dibuat', className: styles.statusReady },
+  empty: { label: 'Tidak ada data', className: styles.statusEmpty },
+};
 
 export default function InsightsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const { isVip } = useFeatureAccess();
-
-  // If not VIP, display Lock screen
-  if (!isVip) {
-    return (
-      <div className={styles.containerLocked}>
-        <div className={styles.lockHero}>
-          <div className={styles.lockCircle}>
-            <Lock size={32} />
-          </div>
-          <h3 className={styles.lockTitle}>Kesimpulan Keuangan AI</h3>
-          <p className={styles.lockSubtitle}>
-            Dapatkan kesimpulan analisis keuangan bulanan otomatis yang dihasilkan secara pintar oleh kecerdasan buatan AI.
-          </p>
-          <Button onClick={() => router.push('/upgrade')} className={styles.upgradeBtn}>
-            Upgrade ke Finy Pro
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const { statusOf, months, loading } = useMonthlyInsights(6);
+  const runningMonth = getRunningMonth();
 
   return (
     <div className={styles.container}>
@@ -55,28 +28,79 @@ export default function InsightsPage() {
         <button onClick={() => router.back()} className={styles.backBtn} aria-label="back">
           <ArrowLeft size={20} />
         </button>
-        <h2 className={styles.title}>Analisis Kesimpulan AI</h2>
+        <h2 className={styles.title}>Analisis Bulanan</h2>
         <div style={{ width: 24 }} />
       </header>
 
-      {/* List of months */}
+      <p className={styles.intro}>
+        Ringkasan AI untuk setiap bulan yang sudah berakhir. Gratis untuk semua pengguna,
+        satu kali per bulan.
+      </p>
+
+      {/* The month in progress can't be summarised yet — it isn't finished. */}
+      <Card className={styles.row} variant="outline">
+        <div className={styles.rowLeft}>
+          <div className={styles.lockedCircle}>
+            <Lock size={16} />
+          </div>
+          <div>
+            <span className={styles.monthName}>{formatMonthDisplay(runningMonth)}</span>
+            <p className={styles.previewText}>
+              Tersedia {formatDate(getMonthCloseDate(runningMonth))}
+            </p>
+          </div>
+        </div>
+        <span className={`${styles.statusBadge} ${styles.statusLocked}`}>Berjalan</span>
+      </Card>
+
+      {/* Closed months */}
       <div className={styles.list}>
-        {generateMonthList(6).map((m) => (
-          <Link key={m} href={`/insights/${m}`}>
-            <Card className={styles.row} variant="outline">
+        {months.map((month) => {
+          const status = loading ? undefined : statusOf(month);
+          const copy = status ? STATUS_COPY[status] : null;
+          const canOpen = status === 'saved' || status === 'ready';
+
+          const body = (
+            <>
               <div className={styles.rowLeft}>
-                <div className={styles.sparkleCircle}>
-                  <Sparkles size={16} />
+                <div className={canOpen ? styles.sparkleCircle : styles.lockedCircle}>
+                  {status === 'saved' ? <CheckCircle2 size={16} /> : <Sparkles size={16} />}
                 </div>
                 <div>
-                  <span className={styles.monthName}>{formatMonthDisplay(m)}</span>
-                  <p className={styles.previewText}>Klik untuk melihat ringkasan analisis AI...</p>
+                  <span className={styles.monthName}>{formatMonthDisplay(month)}</span>
+                  <p className={styles.previewText}>
+                    {!status
+                      ? 'Memeriksa…'
+                      : status === 'saved'
+                        ? 'Lihat kesimpulan yang tersimpan'
+                        : status === 'ready'
+                          ? 'Buat kesimpulan AI untuk bulan ini'
+                          : 'Belum ada transaksi tercatat'}
+                  </p>
                 </div>
               </div>
-              <ChevronRight size={16} className={styles.chevron} />
+
+              {copy ? (
+                <span className={`${styles.statusBadge} ${copy.className}`}>{copy.label}</span>
+              ) : (
+                <Inbox size={16} className={styles.chevron} />
+              )}
+              {canOpen && <ChevronRight size={16} className={styles.chevron} />}
+            </>
+          );
+
+          return canOpen ? (
+            <Link key={month} href={`/insights/${month}`}>
+              <Card className={`${styles.row} ${styles.clickableRow}`} variant="outline">
+                {body}
+              </Card>
+            </Link>
+          ) : (
+            <Card key={month} className={`${styles.row} ${styles.disabledRow}`} variant="outline">
+              {body}
             </Card>
-          </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

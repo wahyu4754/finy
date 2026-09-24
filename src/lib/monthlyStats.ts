@@ -1,4 +1,4 @@
-import { addMonths, format, parseISO } from 'date-fns';
+import { addMonths, format, parseISO, startOfMonth } from 'date-fns';
 import { supabase } from './supabase';
 import { useAuthStore } from '../store/auth';
 import { MonthlyStats } from '../types';
@@ -12,6 +12,42 @@ export function isValidMonth(month: unknown): month is string {
 /** Previous month in YYYY-MM, using date-fns so the year rollover is handled. */
 export function getPreviousMonth(month: string): string {
   return format(addMonths(parseISO(`${month}-01`), -1), 'yyyy-MM');
+}
+
+/** The running month in YYYY-MM, on this device's clock. */
+export function getRunningMonth(now: Date = new Date()): string {
+  return format(now, 'yyyy-MM');
+}
+
+/**
+ * True once `month` has fully passed.
+ *
+ * The analysis is a closed-book summary of a finished month, so the running month
+ * is never eligible — its answer would change every time the user records another
+ * transaction. The edge function enforces the same rule in Asia/Jakarta and is
+ * authoritative; this local copy exists so the UI can hide a button the server
+ * would refuse, and the two only disagree in the hours around a month boundary
+ * for a device set outside WIB.
+ */
+export function isMonthClosed(month: string, now: Date = new Date()): boolean {
+  return isValidMonth(month) && month < getRunningMonth(now);
+}
+
+/** The last `count` closed months, newest first — what /insights lists. */
+export function getClosedMonths(count: number, now: Date = new Date()): string[] {
+  return Array.from({ length: Math.max(0, count) }, (_, i) =>
+    format(addMonths(startOfMonth(now), -(i + 1)), 'yyyy-MM')
+  );
+}
+
+/**
+ * First day after `month`, as YYYY-MM-DD — the date the analysis unlocks.
+ * Returned as a string rather than a Date so callers can hand it straight to
+ * formatDate() without an ISO round-trip that would shift it a day for devices
+ * west of UTC.
+ */
+export function getMonthCloseDate(month: string): string {
+  return format(addMonths(parseISO(`${month}-01`), 1), 'yyyy-MM-dd');
 }
 
 const sum = (rows: Array<{ amount: number }> | null | undefined): number =>
