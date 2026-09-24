@@ -36,10 +36,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // POSTs (Edge Function calls) have no meaningful cache fallback, and intercepting
+  // them turned a CORS rejection into an opaque net::ERR_FAILED.
+  if (event.request.method !== 'GET') return;
+
   // Simple fetch interceptor: network first, fallback to cache
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    fetch(event.request).catch(async () => {
+      const cached = await caches.match(event.request);
+      // respondWith rejects a non-Response, which surfaced as
+      // "TypeError: Failed to convert value to 'Response'" and hid the real error.
+      return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
     })
   );
 });

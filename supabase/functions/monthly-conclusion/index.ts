@@ -14,6 +14,15 @@ const adminClient = createClient(
 );
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
+// Preflight must echo the request headers the browser sends, or the real POST is never
+// made and the page only sees an opaque network error. Same shape as delete-account,
+// verify-payment and ai-assistant.
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 // ─── Security: limits ────────────────────────────────────────────────
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 MB (structured data only)
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -34,7 +43,7 @@ const PASSTHROUGH_CODES = new Set([
 function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    headers: { 'Content-Type': 'application/json', ...CORS },
   });
 }
 
@@ -111,7 +120,7 @@ function buildUserPrompt(month: string, stats: NormalizedStats): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
+    return new Response('ok', { headers: CORS });
   }
 
   let userId: string | null = null;

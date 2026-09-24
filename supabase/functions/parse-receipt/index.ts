@@ -13,6 +13,15 @@ const adminClient = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
+// Preflight must echo the request headers the browser sends, or the real POST is never
+// made and the page only sees an opaque network error. Same shape as delete-account,
+// verify-payment and ai-assistant.
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 // ─── Security: max sizes ─────────────────────────────────────────────
 const MAX_BODY_SIZE = 10 * 1024 * 1024;  // 10 MB total
 const MAX_IMAGE_SIZE = 5_000_000;         // ~3.7 MB raw base64
@@ -24,7 +33,7 @@ function sanitizeForPrompt(s: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
+    return new Response('ok', { headers: CORS });
   }
 
   try {
@@ -49,7 +58,7 @@ Deno.serve(async (req) => {
     if (!allowed) {
       return new Response(JSON.stringify({ error: 'Terlalu banyak permintaan. Coba lagi nanti.' }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
 
@@ -63,7 +72,7 @@ Deno.serve(async (req) => {
       await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Request terlalu besar' }), {
         status: 413,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
 
@@ -74,7 +83,7 @@ Deno.serve(async (req) => {
       await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Format request tidak valid' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
 
@@ -88,14 +97,14 @@ Deno.serve(async (req) => {
       await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Gambar diperlukan' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
     if (imageBase64.length > MAX_IMAGE_SIZE) {
       await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
       return new Response(JSON.stringify({ error: 'Gambar terlalu besar (maks ~3.7 MB)' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
 
@@ -134,7 +143,7 @@ Aturan:
       );
 
       return new Response(JSON.stringify(parsed), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Content-Type': 'application/json', ...CORS },
       });
     } catch (aiError: any) {
       // Refund credit on AI failure
@@ -153,7 +162,7 @@ Aturan:
         : 'Gagal memproses struk. Coba lagi nanti.';
     return new Response(JSON.stringify({ error: safeMessage }), {
       status: isInsufficient ? 200 : 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', ...CORS },
     });
   }
 });
