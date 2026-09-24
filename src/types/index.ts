@@ -88,12 +88,26 @@ export interface AIInsight {
 }
 
 export interface AIConclusion {
-  id: string;
-  user_id: string;
+  id: string | null;
+  user_id?: string;
   month: string;
   summary: string;
   insights: AIInsight[];
   generated_at: string;
+  /** true when the answer came from the ai_conclusions cache instead of a new Gemini call */
+  cached?: boolean;
+}
+
+/** Payload the `monthly-conclusion` edge function analyses. Field names are the contract. */
+export interface MonthlyStats {
+  totalBalance: number;
+  totalExpense: number;
+  totalIncome: number;
+  budget: number;
+  lastMonthExpense: number;
+  transactionCount: number;
+  categoryBreakdown: Array<{ category: string; amount: number; percentage: number }>;
+  topTransactions: Array<{ note: string; category: string; amount: number; date: string }>;
 }
 
 export interface ParsedReceipt {

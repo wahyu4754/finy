@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { ParsedReceipt, AIConclusion } from '../types';
+import { ParsedReceipt, AIConclusion, MonthlyStats } from '../types';
 
 export async function scanReceipt(file: File): Promise<ParsedReceipt> {
   try {
@@ -36,19 +36,37 @@ export async function scanReceipt(file: File): Promise<ParsedReceipt> {
   }
 }
 
-export async function generateMonthlyConclusion(month: string, stats: any): Promise<AIConclusion> {
+/**
+ * Returns the AI conclusion for `month`, sending the real figures for that month.
+ *
+ * The edge function answers from its `ai_conclusions` cache when it has one, so a
+ * repeat visit costs no credit; pass `refresh: true` to force a regeneration.
+ * Throws an Error whose message is the server's machine-readable code
+ * (INSUFFICIENT_CREDITS, RATE_LIMITED, AI_SERVICE_ERROR, …) so the caller can
+ * translate it — never a fabricated conclusion.
+ */
+export async function generateMonthlyConclusion(
+  month: string,
+  stats: MonthlyStats,
+  options?: { refresh?: boolean }
+): Promise<AIConclusion> {
   try {
     const { data, error } = await supabase.functions.invoke('monthly-conclusion', {
-      body: { month, stats }
+      body: { month, stats, refresh: options?.refresh === true },
     });
 
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-    if (data) return data as AIConclusion;
+    // functions-js reports a non-2xx as FunctionsHttpError whose .message is the generic
+    // "Edge Function returned a non-2xx status code"; the real body sits on error.context.
+    if (error) {
+      const body = await (error.context?.json?.() ?? Promise.resolve(null)).catch(() => null);
+      throw new Error(String(body?.error ?? error.message ?? 'ANALYSIS_FAILED'));
+    }
+    if (data?.error) throw new Error(String(data.error));
+    if (typeof data?.summary !== 'string') throw new Error('AI_INVALID_RESPONSE');
 
-    throw new Error('Empty response');
+    return data as AIConclusion;
   } catch (err) {
     console.error('generateMonthlyConclusion failed:', err);
-    throw err instanceof Error ? err : new Error('Failed to generate monthly conclusion');
+    throw err instanceof Error ? err : new Error('ANALYSIS_FAILED');
   }
 }

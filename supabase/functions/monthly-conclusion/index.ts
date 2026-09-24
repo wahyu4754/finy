@@ -16,15 +16,119 @@ const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 // ─── Security: limits ────────────────────────────────────────────────
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 MB (structured data only)
+const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+const MAX_CATEGORIES = 30;
+const MAX_TOP_TRANSACTIONS = 5;
+const MAX_INSIGHTS = 3;
+
+// Codes the client knows how to translate; anything else is collapsed to ANALYSIS_FAILED
+// so an internal message never reaches the user.
+const PASSTHROUGH_CODES = new Set([
+  'AI_NOT_CONFIGURED',
+  'AI_SERVICE_ERROR',
+  'AI_EMPTY_RESPONSE',
+  'AI_INVALID_RESPONSE',
+  'UNAUTHORIZED',
+]);
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+  });
+}
+
+function toNumber(value: unknown): number {
+  const n = typeof value === 'string' ? Number(value) : value;
+  return typeof n === 'number' && Number.isFinite(n) ? Math.round(n) : 0;
+}
+
+function toText(value: unknown, max: number, fallback: string): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text ? text.slice(0, max) : fallback;
+}
+
+/**
+ * Coerces the client payload into the exact shape the prompt is built from.
+ * Unbounded arrays and free-text fields would otherwise go straight into the
+ * prompt, so both are capped here rather than trusted.
+ */
+function normalizeStats(raw: any) {
+  const categoryBreakdown = Array.isArray(raw?.categoryBreakdown)
+    ? raw.categoryBreakdown.slice(0, MAX_CATEGORIES).map((c: any) => ({
+        category: toText(c?.category, 60, 'Lainnya'),
+        amount: toNumber(c?.amount),
+        percentage: toNumber(c?.percentage),
+      }))
+    : [];
+
+  const topTransactions = Array.isArray(raw?.topTransactions)
+    ? raw.topTransactions.slice(0, MAX_TOP_TRANSACTIONS).map((t: any) => ({
+        note: toText(t?.note, 80, 'Transaksi'),
+        category: toText(t?.category, 60, 'Lainnya'),
+        amount: toNumber(t?.amount),
+        date: toText(t?.date, 10, ''),
+      }))
+    : [];
+
+  return {
+    totalBalance: toNumber(raw?.totalBalance),
+    totalExpense: toNumber(raw?.totalExpense),
+    totalIncome: toNumber(raw?.totalIncome),
+    budget: toNumber(raw?.budget),
+    lastMonthExpense: toNumber(raw?.lastMonthExpense),
+    transactionCount: toNumber(raw?.transactionCount),
+    categoryBreakdown,
+    topTransactions,
+  };
+}
+
+type NormalizedStats = ReturnType<typeof normalizeStats>;
+
+const systemPrompt = `Kamu financial advisor warm & supportive untuk user Indonesia.
+Beri analisis actionable, tidak menggurui, tone friendly seperti teman dekat.
+Gunakan HANYA angka yang ada di data. Jangan pernah mengarang angka, persentase, atau transaksi yang tidak tercantum.
+Jika data terlalu sedikit untuk disimpulkan, katakan apa adanya dan beri satu saran pencatatan.
+WAJIB membalas HANYA dengan JSON murni tanpa markdown blocks, dengan format:
+{
+  "summary": "2-3 kalimat ringkasan bulan ini",
+  "insights": [
+    {"title": "judul", "description": "deskripsi", "type": "warning|tip|praise"}
+  ]
+}
+Maksimal 3 insights yang ACTIONABLE.`;
+
+function buildUserPrompt(month: string, stats: NormalizedStats): string {
+  return `Data bulan ${month} (${stats.transactionCount} transaksi tercatat):
+- Total Saldo Dompet Saat Ini: Rp ${stats.totalBalance}
+- Total expense: Rp ${stats.totalExpense}
+- Total income: Rp ${stats.totalIncome}
+- Budget: Rp ${stats.budget}
+- Distribusi kategori: ${JSON.stringify(stats.categoryBreakdown)}
+- Total expense bulan lalu: Rp ${stats.lastMonthExpense}
+- Top 5 transaksi: ${JSON.stringify(stats.topTransactions)}`;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
   }
 
+  let userId: string | null = null;
+  let creditConsumed = false;
+
+  // Single refund path: only ever runs after consume_ai_credit() actually succeeded,
+  // and only once, so a failure can't top a user's balance up twice.
+  const refundCredit = async () => {
+    if (!creditConsumed || !userId) return;
+    creditConsumed = false;
+    const { error } = await adminClient.rpc('refund_ai_credit_for', { p_user_id: userId });
+    if (error) console.error('[monthly-conclusion] refund failed:', error.message);
+  };
+
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
+    if (!authHeader) throw new Error('UNAUTHORIZED');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -33,7 +137,50 @@ Deno.serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) throw new Error('Unauthorized');
+    if (userError || !user) throw new Error('UNAUTHORIZED');
+    userId = user.id;
+
+    // ── H-2: Input size validation — before anything is charged ────
+    const bodyText = await req.text();
+    if (bodyText.length > MAX_BODY_SIZE) return jsonResponse({ error: 'PAYLOAD_TOO_LARGE' }, 413);
+
+    let parsedBody: any;
+    try {
+      parsedBody = JSON.parse(bodyText);
+    } catch {
+      return jsonResponse({ error: 'INVALID_BODY' }, 400);
+    }
+
+    const month = parsedBody?.month;
+    if (typeof month !== 'string' || !MONTH_PATTERN.test(month)) {
+      return jsonResponse({ error: 'INVALID_MONTH' }, 400);
+    }
+
+    // C-11: the client nests its figures under `stats`; accept top-level too so the
+    // contract can't silently drift back into analysing all zeros.
+    const stats = normalizeStats(parsedBody?.stats ?? parsedBody);
+
+    // D-10: cache-first. ai_conclusions is unique per (user_id, month), so a repeat
+    // visit returns the stored analysis with no credit spent and no Gemini call.
+    if (parsedBody?.refresh !== true) {
+      const { data: cached, error: cacheError } = await supabaseClient
+        .from('ai_conclusions')
+        .select('id, user_id, month, summary, insights, generated_at')
+        .eq('user_id', user.id)
+        .eq('month', month)
+        .maybeSingle();
+
+      if (cacheError) {
+        console.error('[monthly-conclusion] cache read failed:', cacheError.message);
+      } else if (cached?.summary) {
+        return jsonResponse({ ...cached, cached: true });
+      }
+    }
+
+    // Nothing to analyse: refuse rather than pay Gemini to invent a month from zeros.
+    if (stats.transactionCount === 0) return jsonResponse({ error: 'NO_DATA' }, 422);
+
+    if (!GEMINI_API_KEY) throw new Error('AI_NOT_CONFIGURED');
 
     // ── H-3: Rate limiting (stricter — expensive operation) ────────
     const { data: allowed } = await supabaseClient.rpc('check_rate_limit', {
@@ -41,103 +188,75 @@ Deno.serve(async (req) => {
       p_max: 5,
       p_window_minutes: 10,
     });
-    if (!allowed) {
-      return new Response(JSON.stringify({ error: 'Terlalu banyak permintaan. Coba lagi nanti.' }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
-    }
+    if (!allowed) return jsonResponse({ error: 'RATE_LIMITED' }, 429);
 
     // ── H-1: Atomic credit consumption ─────────────────────────────
     const { data: creditOk } = await supabaseClient.rpc('consume_ai_credit');
-    if (!creditOk) throw new Error('INSUFFICIENT_CREDITS');
+    if (!creditOk) return jsonResponse({ error: 'INSUFFICIENT_CREDITS' }, 402);
+    creditConsumed = true;
 
-    // ── H-2: Input size validation ─────────────────────────────────
-    const bodyText = await req.text();
-    if (bodyText.length > MAX_BODY_SIZE) {
-      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
-      return new Response(JSON.stringify({ error: 'Request terlalu besar' }), {
-        status: 413,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
-    }
+    const raw = await callGemini(systemPrompt, [
+      { role: 'user', parts: [{ text: buildUserPrompt(month, stats) }] },
+    ]);
+    const parsed = extractJson(raw);
 
-    let parsedBody: any;
-    try {
-      parsedBody = JSON.parse(bodyText);
-    } catch {
-      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
-      return new Response(JSON.stringify({ error: 'Format request tidak valid' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
-    }
+    const summary = toText(parsed?.summary, 2000, '');
+    const insights = (Array.isArray(parsed?.insights) ? parsed.insights : [])
+      .filter((i: any) => toText(i?.title, 120, '') && toText(i?.description, 1000, ''))
+      .slice(0, MAX_INSIGHTS)
+      .map((i: any) => ({
+        title: toText(i.title, 120, 'Catatan'),
+        description: toText(i.description, 1000, ''),
+        type: ['warning', 'tip', 'praise'].includes(i?.type) ? i.type : 'tip',
+      }));
 
-    const { month, totalExpense, totalIncome, budget, categoryBreakdown, lastMonthExpense, topTransactions, totalBalance } = parsedBody;
+    if (!summary || insights.length === 0) throw new Error('AI_INVALID_RESPONSE');
 
-    if (!GEMINI_API_KEY) {
-      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
-      throw new Error('AI_NOT_CONFIGURED');
-    }
+    // Persist so the next visit is free. A failed write must not fail the request —
+    // the analysis has already been paid for, so serve it and let the next visit retry.
+    const { data: saved, error: upsertError } = await supabaseClient
+      .from('ai_conclusions')
+      .upsert({ user_id: user.id, month, summary, insights }, { onConflict: 'user_id,month' })
+      .select('id, generated_at')
+      .maybeSingle();
 
-    // M-3: Basic validation
-    if (!month || typeof month !== 'string') {
-      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
-      return new Response(JSON.stringify({ error: 'Parameter bulan diperlukan' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
-    }
+    if (upsertError) console.error('[monthly-conclusion] cache write failed:', upsertError.message);
 
-    const systemPrompt = `Kamu financial advisor warm & supportive untuk user Indonesia.
-Beri analisis actionable, tidak menggurui, tone friendly seperti teman dekat.
-WAJIB membalas HANYA dengan JSON murni tanpa markdown blocks, dengan format:
-{
-  "summary": "2-3 kalimat ringkasan bulan ini",
-  "insights": [
-    {"title": "judul", "description": "deskripsi", "type": "warning|tip|praise"}
-  ],
-  "trend_note": "string"
-}
-Maksimal 3 insights yang ACTIONABLE.`;
-
-    const userPrompt = `Data bulan ${month}:
-- Total Saldo Dompet Saat Ini: Rp ${totalBalance || 0}
-- Total expense: Rp ${totalExpense || 0}
-- Total income: Rp ${totalIncome || 0}
-- Budget: Rp ${budget || 0}
-- Distribusi kategori: ${JSON.stringify(categoryBreakdown || [])}
-- Bulan lalu: Rp ${lastMonthExpense || 0}
-- Top 5 transaksi: ${JSON.stringify(topTransactions || [])}`;
-
-    try {
-      let content = await callGemini(systemPrompt, [{ role: 'user', parts: [{ text: userPrompt }] }]);
-      content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(content);
-
-      return new Response(JSON.stringify(parsed), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
-    } catch (aiError: any) {
-      await adminClient.rpc('refund_ai_credit_for', { p_user_id: user.id });
-      console.error('[monthly-conclusion] AI error:', aiError);
-      throw new Error('AI_SERVICE_ERROR');
-    }
-  } catch (error: any) {
-    console.error('[monthly-conclusion] Error:', error);
-    const isInsufficient = error.message === 'INSUFFICIENT_CREDITS';
-    // M-6: Safe error messages
-    const safeMessage = isInsufficient
-      ? 'INSUFFICIENT_CREDITS'
-      : error.message === 'Unauthorized'
-        ? 'Unauthorized'
-        : 'Gagal membuat analisis. Coba lagi nanti.';
-    return new Response(JSON.stringify({ error: safeMessage }), {
-      status: isInsufficient ? 200 : 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    return jsonResponse({
+      id: saved?.id ?? null,
+      user_id: user.id,
+      month,
+      summary,
+      insights,
+      generated_at: saved?.generated_at ?? new Date().toISOString(),
+      cached: false,
     });
+  } catch (error: any) {
+    await refundCredit();
+    console.error('[monthly-conclusion] Error:', error);
+    const message = String(error?.message ?? '');
+    const code = PASSTHROUGH_CODES.has(message) ? message : 'ANALYSIS_FAILED';
+    return jsonResponse({ error: code }, code === 'UNAUTHORIZED' ? 401 : 400);
   }
 });
+
+/**
+ * Gemini wraps JSON in prose or ```json fences often enough that a bare JSON.parse
+ * throws on a perfectly good answer — which used to surface as a generic 400 and a
+ * refunded credit. Slice to the outermost braces first (M-19).
+ */
+function extractJson(content: string): any {
+  const cleaned = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end <= start) throw new Error('AI_INVALID_RESPONSE');
+
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch {
+    throw new Error('AI_INVALID_RESPONSE');
+  }
+}
 
 async function callGemini(systemPrompt: string, contents: any[]): Promise<string> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -156,11 +275,18 @@ async function callGemini(systemPrompt: string, contents: any[]): Promise<string
   });
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${err}`);
+    console.error(`[monthly-conclusion] Gemini API error ${response.status}:`, await response.text());
+    throw new Error('AI_SERVICE_ERROR');
   }
 
   const data = await response.json();
-  if (!data.candidates?.length) throw new Error('Gemini returned empty response');
-  return data.candidates[0].content.parts[0].text as string;
+  const candidate = data.candidates?.[0];
+  // On finishReason SAFETY/RECITATION/MAX_TOKENS the candidate exists with no text part,
+  // so index the parts defensively instead of assuming [0].text (M-18).
+  const part = candidate?.content?.parts?.find((p: any) => typeof p?.text === 'string');
+  if (!part?.text) {
+    console.error('[monthly-conclusion] empty Gemini response, finishReason:', candidate?.finishReason);
+    throw new Error('AI_EMPTY_RESPONSE');
+  }
+  return part.text as string;
 }

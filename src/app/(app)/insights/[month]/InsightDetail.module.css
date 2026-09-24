@@ -137,3 +137,19 @@
   font-weight: 600;
   color: var(--color-ink-muted);
 }
+
+/* Footer: generation timestamp + regenerate action */
+.footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
