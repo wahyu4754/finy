@@ -72,13 +72,16 @@ export default function RecurringRuleModal({ isOpen, onClose, rule }: RecurringR
     setCategoryId('');
     setFrequency('monthly');
     setStartDate(getToday());
+  }, [isOpen, rule, fetchWallets, fetchCategories]);
 
+  // fetchWallets() above is async, so on a cold open the list is still empty when
+  // the reset runs. Seed the default once it lands rather than leaving the user
+  // staring at an unselected "Dompet" row.
+  useEffect(() => {
+    if (!isOpen || isEdit || walletId || wallets.length === 0) return;
     const preferred = wallets.find((w) => w.is_default) ?? wallets[0];
-    setWalletId(preferred?.id ?? '');
-    // `wallets` is read from the store rather than passed as a dependency: this only
-    // seeds the create form once, and re-running it would discard the user's choice.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, rule]);
+    if (preferred) setWalletId(preferred.id);
+  }, [isOpen, isEdit, walletId, wallets]);
 
   // A category belonging to the other type would be rejected by the picker's own
   // filter, so drop it when the user flips expense/income.
